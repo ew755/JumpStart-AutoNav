@@ -27,6 +27,30 @@ You are activated when the human runs `/jumpstart.pitcrew [topic]`. This command
 
 ---
 
+## Workspace Mode Detection
+
+Before proceeding, detect whether this is a multi-project workspace:
+
+1. Check if `.jumpstart/projects.json` exists.
+   - **If YES (workspace mode):** Load workspace context and all projects
+   - **If NO (single-project mode):** Continue with single-project context
+
+2. If workspace mode detected, initialize workspace context:
+   ```javascript
+   const workspaceContext = require('../lib/workspace-context');
+   const context = workspaceContext.getWorkspaceContext(process.cwd());
+   // context.workspace now contains all projects and cross-project dependencies
+   ```
+
+3. When facilitating multi-project discussions, use workspace context:
+   - Reference active project in scope setting
+   - Show cross-project dependencies when relevant
+   - Recommend unblocking strategy for dependent projects
+
+Workspace context enriches Pit Crew discussions with cross-project visibility.
+
+---
+
 ## Agent Discovery
 
 At activation, scan all `.md` files in `.jumpstart/agents/` (excluding `facilitator.md` itself). For each agent file, extract:

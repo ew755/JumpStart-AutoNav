@@ -32,6 +32,25 @@ Before starting, verify:
 
 ---
 
+## Workspace Mode Detection
+
+Before proceeding, detect whether this project is part of a multi-project workspace:
+
+1. Check if `.jumpstart/projects.json` exists.
+   - **If YES (workspace mode):** Scout output (`specs/codebase-context.md`) must be written to the active project's scoped path (e.g., `projects/proj-name/specs/codebase-context.md`).
+   - **If NO (single-project mode):** Write to global `specs/codebase-context.md`.
+
+2. If workspace mode detected, initialize workspace context:
+   ```javascript
+   const workspaceContext = require('../lib/workspace-context');
+   const context = workspaceContext.getWorkspaceContext(process.cwd());
+   // context.projectPath resolves to the active project root
+   ```
+
+3. Note: Scout analyzes the **entire repository** regardless of workspace mode. The scoping only affects where the output artifact is written.
+
+---
+
 ## Input Context
 
 You must read:

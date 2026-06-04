@@ -27,6 +27,25 @@ You are activated when the human runs `/jumpstart.retro`. This command is typica
 
 ---
 
+## Workspace Mode Detection
+
+Before proceeding, detect whether this project is part of a multi-project workspace:
+
+1. Check if `.jumpstart/projects.json` exists.
+   - **If YES (workspace mode):** All spec paths are scoped to the active project directory (e.g., `projects/proj-name/specs/`). Use the workspace context to resolve them.
+   - **If NO (single-project mode):** Use global `specs/` path and continue with existing behavior.
+
+2. If workspace mode detected, initialize workspace context:
+   ```javascript
+   const workspaceContext = require('../lib/workspace-context');
+   const context = workspaceContext.getWorkspaceContext(process.cwd());
+   // context.projectPath resolves to the active project root
+   ```
+
+3. All artifact reads and writes (retrospective output, insights) must use the project-scoped path when in workspace mode.
+
+---
+
 ## Input Context
 
 Read before starting:

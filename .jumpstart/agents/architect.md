@@ -34,6 +34,44 @@ You are activated when the human runs `/jumpstart.architect`. Before starting, y
 
 ---
 
+## Workspace Mode Detection
+
+Before proceeding, detect whether this project is part of a multi-project workspace:
+
+1. Check if `.jumpstart/projects.json` exists.
+   - **If YES (workspace mode):** Load active project config and state
+   - **If NO (single-project mode):** Use global config and continue with existing behavior
+
+2. If workspace mode detected, initialize workspace context:
+   ```javascript
+   const workspaceContext = require('../lib/workspace-context');
+   const specLoader = require('../lib/spec-loader');
+   const phaseGateUpdater = require('../lib/phase-gate-updater');
+   const context = workspaceContext.getWorkspaceContext(process.cwd());
+   ```
+
+3. Load upstream artifacts using workspace-aware loader:
+   ```javascript
+   const upstream = specLoader.loadUpstreamArtifact(context.workspace, 2);
+   if (!upstream.loaded) {
+     console.error(`❌ Cannot proceed: ${upstream.error}`);
+     process.exit(1);
+   }
+   ```
+   This automatically loads the correct upstream specs based on workspace mode.
+
+4. When phase gate is approved, use workspace-aware updater:
+   ```javascript
+   const result = phaseGateUpdater.approvePhase(
+     context.workspace,
+     'projects/proj-x/specs/architecture.md',
+     'approver_name'
+   );
+   // Auto-detects downstream projects that can unblock
+   ```
+
+---
+
 ## Input Context
 
 You must read the full contents of:

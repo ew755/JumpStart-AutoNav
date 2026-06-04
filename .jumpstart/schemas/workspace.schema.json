@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://jumpstart-mode.dev/schemas/workspace.schema.json",
+  "title": "Jump Start Workspace Configuration",
+  "description": "Multi-project workspace registry and settings for coordinated AI delivery",
+  "type": "object",
+  "required": ["workspace", "projects", "active_project", "settings"],
+  "properties": {
+    "workspace": {
+      "type": "object",
+      "required": ["id", "enabled"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique workspace identifier (e.g., dev-workspace-001, prod-workspace-001)"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether multi-project mode is enabled"
+        },
+        "description": {
+          "type": "string",
+          "description": "Workspace description and purpose"
+        }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "path", "status", "config_path"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^proj-[a-z0-9-]+$",
+            "description": "Stable project identifier (immutable after creation)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable project name"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path to project root (e.g., 'projects/token-usage', '.')"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["greenfield", "brownfield"],
+            "description": "Project type"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["initializing", "phase-0", "phase-1", "phase-2", "phase-3", "phase-4", "completed", "archived"],
+            "description": "Current project phase"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 project creation timestamp"
+          },
+          "config_path": {
+            "type": "string",
+            "description": "Path to project-specific .js-config.yaml or .jumpstart/config.yaml"
+          },
+          "phase": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "maximum": 4,
+            "description": "Current phase number (0-4) or null if not started"
+          },
+          "approver": {
+            "type": ["string", "null"],
+            "description": "Project approver name or team"
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Whether project is locked (e.g., during agent execution)"
+          },
+          "lock_reason": {
+            "type": ["string", "null"],
+            "description": "Reason for lock (e.g., 'Agent Architect running', 'Pending approval')"
+          }
+        }
+      }
+    },
+    "active_project": {
+      "type": "string",
+      "pattern": "^proj-[a-z0-9-]+$",
+      "description": "Currently active project ID"
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "enforce_sequential_phases": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, phases must be sequential per project"
+        },
+        "allow_parallel_projects": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, multiple projects can run simultaneously; if false, only active_project can advance"
+        },
+        "pit_crew_review_required": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, Pit Crew must review before phase gate approval when cross-project dependencies exist"
+        },
+        "cross_project_dependency_validation": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, validate that project dependencies are resolvable before phase advancement"
+        },
+        "aggregate_cost_tracking": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, roll up token usage across all projects into workspace usage-log.json"
+        }
+      }
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version (SemVer)"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last update"
+    }
+  }
+}

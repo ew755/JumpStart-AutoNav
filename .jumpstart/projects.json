@@ -1,0 +1,32 @@
+{
+  "workspace": {
+    "id": "dev-workspace-001",
+    "enabled": true,
+    "description": "Multi-project workspace for coordinated AI delivery"
+  },
+  "projects": [
+    {
+      "id": "proj-default",
+      "name": "Default Project",
+      "path": ".",
+      "type": "greenfield",
+      "status": "initializing",
+      "created_at": "2026-06-03T00:00:00Z",
+      "config_path": ".jumpstart/config.yaml",
+      "phase": null,
+      "approver": null,
+      "locked": false,
+      "lock_reason": null
+    }
+  ],
+  "active_project": "proj-default",
+  "settings": {
+    "enforce_sequential_phases": true,
+    "allow_parallel_projects": false,
+    "pit_crew_review_required": true,
+    "cross_project_dependency_validation": true,
+    "aggregate_cost_tracking": true
+  },
+  "version": "1.0.0",
+  "last_updated": "2026-06-03T00:00:00Z"
+}

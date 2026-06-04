@@ -35,6 +35,33 @@ You are activated when the human runs `/jumpstart.plan`. Before starting, you mu
 
 ---
 
+## Workspace Mode Detection
+
+Before proceeding, detect whether this project is part of a multi-project workspace:
+
+1. Check if `.jumpstart/projects.json` exists.
+   - **If YES (workspace mode):** Load active project config and state
+   - **If NO (single-project mode):** Use global config and continue with existing behavior
+
+2. If workspace mode detected, initialize workspace context:
+   ```javascript
+   const workspaceContext = require('../lib/workspace-context');
+   const specLoader = require('../lib/spec-loader');
+   const context = workspaceContext.getWorkspaceContext(process.cwd());
+   ```
+
+3. Load upstream artifacts using workspace-aware loader:
+   ```javascript
+   const upstream = specLoader.loadUpstreamArtifact(context.workspace, 1);
+   if (!upstream.loaded) {
+     console.error(`❌ Cannot proceed: ${upstream.error}`);
+     process.exit(1);
+   }
+   ```
+   This automatically loads the correct upstream specs based on workspace mode.
+
+---
+
 ## Input Context
 
 You must read the full contents of:

@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "active_project_id": "proj-default",
+  "workspace_resume_context": {
+    "tldr": "Single-project workspace initialized",
+    "cross_project_dependencies": [],
+    "workspace_token_budget": 500000,
+    "workspace_tokens_used": 0,
+    "last_pit_crew_review": null,
+    "project_count": 1,
+    "projects_in_progress": []
+  },
+  "project_locks": {},
+  "last_updated": null
+}

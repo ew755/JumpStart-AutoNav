@@ -11,7 +11,7 @@ module.exports = defineConfig({
     testTimeout: 10000,
     coverage: {
       provider: 'v8',
-      include: ['bin/lib/**/*.js'],
+      include: ['bin/lib/**/*.js', 'lib/**/*.js'],
       exclude: ['bin/cli.js', 'bin/verify-diagrams.js', 'bin/context7-setup.js']
     }
   }

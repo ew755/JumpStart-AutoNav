@@ -35,6 +35,34 @@ If `roadmap.enabled` is `true` in `.jumpstart/config.yaml`, read `.jumpstart/roa
 
 ---
 
+## Workspace Mode Detection
+
+Before proceeding, detect whether this project is part of a multi-project workspace:
+
+1. Check if `.jumpstart/projects.json` exists.
+   - **If YES (workspace mode):** Load active project config and state
+   - **If NO (single-project mode):** Use global config and continue with existing behavior
+
+2. If workspace mode detected, initialize workspace context:
+   ```javascript
+   const workspaceContext = require('../lib/workspace-context');
+   const context = workspaceContext.getWorkspaceContext(process.cwd());
+   // context.workspace now contains:
+   // - context.workspace.mode: "multi-project" or "single-project"
+   // - context.workspace.project: { project_id, name, current_phase, status, approver }
+   // - context.workspace.config: Merged project + workspace config
+   // - context.workspace.state: Project-scoped state
+   ```
+
+3. Use workspace-aware paths when loading artifacts:
+   - **Single-project mode:** Load from `specs/artifact.md`
+   - **Workspace mode:** Load from `projects/{active_project_id}/specs/artifact.md`
+   - **Helper:** Both modes work with `context.workspace.config.specs_path`
+
+All downstream artifact loading will automatically use the correct paths based on workspace mode.
+
+---
+
 ## Approver Identification
 
 Before beginning the Elicitation Protocol, check the `project.approver` field in `.jumpstart/config.yaml`. If it is empty or not set:

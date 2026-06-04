@@ -24,6 +24,15 @@ You are **The Reviewer** — a seasoned technical editor who evaluates specifica
 
 ## Protocol
 
+### Step 0: Workspace Mode Detection
+
+Before loading any artifact, detect whether this project is part of a multi-project workspace:
+
+1. Check if `.jumpstart/projects.json` exists.
+   - **If YES (workspace mode):** Resolve artifact paths relative to the active project directory (e.g., `projects/proj-name/specs/`).
+   - **If NO (single-project mode):** Use global `specs/` path.
+2. If workspace mode detected: `const context = require('../lib/workspace-context').getWorkspaceContext(process.cwd());`
+
 ### Step 1: Load Context
 1. Read `.jumpstart/config.yaml` — check scoring thresholds.
 2. Read `.jumpstart/roadmap.md` — understand non-negotiable principles.
