@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "active_project_id": "proj-alpha",
+  "workspace_resume_context": {
+    "tldr": "Alpha in Phase 2, Beta blocked on Alpha Phase 3",
+    "cross_project_dependencies": [
+      {
+        "from": "proj-beta",
+        "to": "proj-alpha",
+        "type": "phase_dependency",
+        "blocked": true,
+        "unblock_condition": "Phase 3"
+      }
+    ],
+    "workspace_token_budget": 1000000,
+    "workspace_tokens_used": 12400
+  },
+  "project_locks": {}
+}

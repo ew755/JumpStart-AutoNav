@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "current_phase": null,
+  "approved_artifacts": [],
+  "resume_context": {
+    "tldr": null,
+    "last_action": null,
+    "next_action": null,
+    "next_command": null,
+    "open_questions": [],
+    "key_insights": [],
+    "last_agent": null,
+    "last_phase": null,
+    "last_step": null
+  }
+}

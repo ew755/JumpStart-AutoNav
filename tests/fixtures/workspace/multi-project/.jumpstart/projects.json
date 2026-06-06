@@ -1,0 +1,39 @@
+{
+  "workspace": {
+    "id": "fixture-workspace-multi",
+    "enabled": true,
+    "description": "Two-project workspace example"
+  },
+  "projects": [
+    {
+      "id": "proj-alpha",
+      "name": "Alpha Feature",
+      "path": "projects/proj-alpha",
+      "type": "greenfield",
+      "status": "phase-2",
+      "config_path": "projects/proj-alpha/.jumpstart/config.yaml",
+      "phase": 2,
+      "approver": "Alice",
+      "locked": false
+    },
+    {
+      "id": "proj-beta",
+      "name": "Beta Dashboard",
+      "path": "projects/proj-beta",
+      "type": "greenfield",
+      "status": "phase-0",
+      "config_path": "projects/proj-beta/.jumpstart/config.yaml",
+      "phase": 0,
+      "approver": "Bob",
+      "locked": false
+    }
+  ],
+  "active_project": "proj-alpha",
+  "settings": {
+    "enforce_sequential_phases": true,
+    "allow_parallel_projects": false,
+    "cross_project_dependency_validation": true,
+    "aggregate_cost_tracking": true
+  },
+  "version": "1.0.0"
+}

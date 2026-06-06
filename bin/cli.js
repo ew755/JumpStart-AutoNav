@@ -134,6 +134,7 @@ function showHelp() {
   console.log('  install <item>       Install skill/agent/prompt from marketplace');
   console.log('  uninstall <item>     Uninstall a marketplace item');
   console.log('  status               Show installed marketplace items');
+  console.log('  workspace <cmd>      Multi-project workspace (status, upgrade, set-active, sync)');
   console.log('  integrate            Rebuild skill integration files');
   console.log('  update [item]        Update installed items to latest');
   console.log('  upgrade              Safely upgrade framework files (preserves user content)');
@@ -969,6 +970,12 @@ async function main() {
     // Check for subcommands before parsing normal args
     const subcommand = process.argv[2];
     
+    if (subcommand === 'workspace') {
+      const { runWorkspaceCli } = require('./workspace');
+      runWorkspaceCli(process.argv.slice(3));
+      return;
+    }
+
     if (subcommand === 'verify') {
       const { run } = require('./verify-diagrams');
       const verifyArgv = ['node', 'verify', ...process.argv.slice(3)];
