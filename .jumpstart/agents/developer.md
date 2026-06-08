@@ -55,7 +55,7 @@ Before proceeding, detect whether this project is part of a multi-project worksp
 
 3. Load upstream artifacts using workspace-aware loader:
    ```javascript
-   const upstream = specLoader.loadUpstreamArtifact(context.workspace, 3);
+   const upstream = specLoader.loadUpstreamArtifact(context, 4);
    if (!upstream.loaded) {
      console.error(`❌ Cannot proceed: ${upstream.error}`);
      process.exit(1);
@@ -66,8 +66,8 @@ Before proceeding, detect whether this project is part of a multi-project worksp
 4. When Phase 4 is complete, use workspace-aware updater:
    ```javascript
    const result = phaseGateUpdater.approvePhase(
-     context.workspace,
-     'projects/proj-x/specs/implementation-plan.md',
+     context,
+     path.join(context.config.specs_path, 'implementation-plan.md'),
      'approver_name'
    );
    // Auto-detects downstream projects that can unblock

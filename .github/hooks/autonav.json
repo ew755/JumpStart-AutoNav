@@ -9,6 +9,10 @@
       },
       {
         "type": "command",
+        "command": "node ${workspaceFolder}/.github/hooks/workspace-context.js"
+      },
+      {
+        "type": "command",
         "command": "node ${workspaceFolder}/.github/hooks/phase-gate-status.js"
       },
       {

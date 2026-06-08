@@ -925,6 +925,50 @@ The CLI auto-detects project type during installation by checking for existing s
 
 ---
 
+## Multi-Project Workspace
+
+Jump Start supports coordinating multiple AI projects in one repository. Shared framework assets (agents, templates, skills) live at the workspace root; each project owns its own `specs/`, `src/`, `tests/`, and state.
+
+### Quick start
+
+```bash
+# Migrate an existing single-project repo (creates .jumpstart/projects.json)
+npx jumpstart-mode workspace upgrade
+
+# Show all projects and active selection
+npx jumpstart-mode workspace status
+
+# Switch active project (agents scope specs to this project)
+npx jumpstart-mode workspace set-active proj-my-feature
+
+# Validate cross-project dependencies
+npx jumpstart-mode workspace validate-deps
+
+# Detect drift between registry and per-project state
+npx jumpstart-mode workspace sync --audit
+```
+
+### Layout
+
+| Mode | Registry | Specs location |
+|------|----------|----------------|
+| Single-project | No `projects.json` | Root `specs/` |
+| Migrated root | `proj-default` at path `.` | Root `specs/` (unchanged) |
+| Multi-project | Multiple entries in `projects.json` | `projects/{id}/specs/` |
+
+### Session context
+
+On session start, `.github/hooks/workspace-context.js` injects the active project's scoped paths into agent context. Phase gate status checks also use project-scoped artifact paths.
+
+### Further reading
+
+- `.jumpstart/MULTI_WORKSPACE.md` — architecture and CLI reference
+- `.jumpstart/MIGRATION_GUIDE.md` — migration paths
+- `.jumpstart/AGENT-WORKSPACE-TEMPLATE.md` — agent integration pattern
+- `specs/workspace-p0-implementation-plan.md` — remaining work tracker
+
+---
+
 ## Using with AI Assistants
 
 Jump Start provides first-class integration files for four AI assistants. The installer creates all of them automatically. See `.jumpstart/compat/assistant-mapping.md` for the complete portability mapping.

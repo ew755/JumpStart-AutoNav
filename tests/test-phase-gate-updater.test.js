@@ -223,4 +223,40 @@ describe('checkUnblocks', () => {
     const result = checkUnblocks(context, 'proj-nonexistent', 0);
     expect(Array.isArray(result)).toBe(true);
   });
+
+  it('unblocks downstream projects from cross_project_dependencies', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(tmpDir);
+      mkdirSync(join(tmpDir, '.jumpstart', 'state'), { recursive: true });
+      writeFileSync(
+        join(tmpDir, '.jumpstart', 'state', 'workspace-state.json'),
+        JSON.stringify({
+          version: '1.0.0',
+          active_project_id: 'proj-alpha',
+          workspace_resume_context: {
+            cross_project_dependencies: [
+              {
+                from: 'proj-beta',
+                to: 'proj-alpha',
+                type: 'phase_dependency',
+                blocked: true,
+                unblock_condition: 'Phase 3',
+              },
+            ],
+          },
+        }, null, 2)
+      );
+
+      const unblocked = checkUnblocks({ mode: 'multi-project' }, 'proj-alpha', 3);
+      expect(unblocked).toEqual(['proj-beta']);
+
+      const updated = JSON.parse(
+        readFileSync(join(tmpDir, '.jumpstart', 'state', 'workspace-state.json'), 'utf8')
+      );
+      expect(updated.workspace_resume_context.cross_project_dependencies[0].blocked).toBe(false);
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
 });

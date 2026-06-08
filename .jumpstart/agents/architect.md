@@ -52,7 +52,7 @@ Before proceeding, detect whether this project is part of a multi-project worksp
 
 3. Load upstream artifacts using workspace-aware loader:
    ```javascript
-   const upstream = specLoader.loadUpstreamArtifact(context.workspace, 2);
+   const upstream = specLoader.loadUpstreamArtifact(context, 3);
    if (!upstream.loaded) {
      console.error(`❌ Cannot proceed: ${upstream.error}`);
      process.exit(1);
@@ -63,8 +63,8 @@ Before proceeding, detect whether this project is part of a multi-project worksp
 4. When phase gate is approved, use workspace-aware updater:
    ```javascript
    const result = phaseGateUpdater.approvePhase(
-     context.workspace,
-     'projects/proj-x/specs/architecture.md',
+     context,
+     path.join(context.config.specs_path, 'architecture.md'),
      'approver_name'
    );
    // Auto-detects downstream projects that can unblock

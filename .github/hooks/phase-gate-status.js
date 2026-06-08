@@ -16,6 +16,7 @@ const {
   extractSessionId,
   getPhaseGateApproval,
 } = require('./lib/common');
+const { getWorkspaceContext } = require('../../lib/workspace-context');
 
 const PHASE_ARTIFACTS = [
   { phase: 'Scout', path: 'specs/codebase-context.md' },
@@ -26,19 +27,32 @@ const PHASE_ARTIFACTS = [
   { phase: 'Architect', path: 'specs/implementation-plan.md' },
 ];
 
+function resolveArtifactPaths(root) {
+  const context = getWorkspaceContext(root);
+  if (context.mode === 'multi-project' && context.config?.specs_path) {
+    const specsRoot = context.config.specs_path;
+    return PHASE_ARTIFACTS.map((item) => ({
+      ...item,
+      path: path.join(specsRoot, path.basename(item.path)).replace(/\\/g, '/'),
+    }));
+  }
+  return PHASE_ARTIFACTS;
+}
+
 function readApprovalStatus(root, relPath) {
-  const fullPath = path.join(root, relPath);
-  if (!fs.existsSync(fullPath)) return { state: 'missing', path: relPath };
+  const fullPath = path.isAbsolute(relPath) ? relPath : path.join(root, relPath);
+  const displayPath = path.relative(root, fullPath).replace(/\\/g, '/');
+  if (!fs.existsSync(fullPath)) return { state: 'missing', path: displayPath };
   const content = fs.readFileSync(fullPath, 'utf8');
   const approval = getPhaseGateApproval(content);
   if (approval.approved) {
-    return { state: 'approved', path: relPath };
+    return { state: 'approved', path: displayPath };
   }
-  return { state: 'pending', path: relPath };
+  return { state: 'pending', path: displayPath };
 }
 
 function collectPhaseGateStatuses(root) {
-  return PHASE_ARTIFACTS.map(item => ({
+  return resolveArtifactPaths(root).map(item => ({
     ...item,
     ...readApprovalStatus(root, item.path),
   }));

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, writeFileSync, existsSync, rmSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
@@ -145,12 +145,47 @@ describe('loadActiveProject', () => {
     expect(result.rootDir).toBe(tmpDir);
   });
 
-  it('returns null when active_project_id is not in projects list', () => {
+  it('reconciles to registry when workspace-state active id is invalid', () => {
     writeProjects(tmpDir, defaultProjectsJson('proj-a'));
     writeWorkspaceState(tmpDir, defaultWorkspaceState('proj-missing'));
 
     const result = loadActiveProject(tmpDir);
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result.project_id).toBe('proj-a');
+  });
+
+  it('reconciles active_project_id when registry and state diverge', () => {
+    writeProjects(tmpDir, {
+      ...defaultProjectsJson('proj-b'),
+      active_project: 'proj-b',
+      projects: [
+        {
+          project_id: 'proj-a',
+          name: 'Project A',
+          path: 'projects/proj-a',
+          type: 'greenfield',
+          status: 'phase-1',
+          approver: 'Alice',
+        },
+        {
+          project_id: 'proj-b',
+          name: 'Project B',
+          path: 'projects/proj-b',
+          type: 'greenfield',
+          status: 'phase-0',
+          approver: 'Bob',
+        },
+      ],
+    });
+    writeWorkspaceState(tmpDir, defaultWorkspaceState('proj-a'));
+
+    const result = loadActiveProject(tmpDir);
+    expect(result.project_id).toBe('proj-b');
+
+    const updatedState = JSON.parse(
+      readFileSync(join(tmpDir, '.jumpstart', 'state', 'workspace-state.json'), 'utf8')
+    );
+    expect(updatedState.active_project_id).toBe('proj-b');
   });
 
   it('includes derived projectPath in returned object', () => {

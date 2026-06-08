@@ -39,7 +39,8 @@ Before proceeding, detect whether this is a multi-project workspace:
    ```javascript
    const workspaceContext = require('../lib/workspace-context');
    const context = workspaceContext.getWorkspaceContext(process.cwd());
-   // context.workspace now contains all projects and cross-project dependencies
+   // context.mode, context.project, context.config, context.state
+   // Load .jumpstart/projects.json for the full project list and dependencies
    ```
 
 3. When facilitating multi-project discussions, use workspace context:

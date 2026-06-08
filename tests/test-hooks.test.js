@@ -39,6 +39,7 @@ const specGraphUpdater = require(path.join(HOOKS_DIR, 'spec-graph-updater.js'));
 const sessionAnalytics = require(path.join(HOOKS_DIR, 'session-analytics.js'));
 const common = require(path.join(HOOKS_DIR, 'lib', 'common.js'));
 const workspaceFingerprint = require(path.join(HOOKS_DIR, 'workspace-fingerprint.js'));
+const workspaceContextHook = require(path.join(HOOKS_DIR, 'workspace-context.js'));
 const phaseGateStatus = require(path.join(HOOKS_DIR, 'phase-gate-status.js'));
 const timelineWarmup = require(path.join(HOOKS_DIR, 'timeline-warmup.js'));
 const promptClassifier = require(path.join(HOOKS_DIR, 'prompt-classifier.js'));
@@ -155,6 +156,55 @@ describe('workspace-fingerprint hook', () => {
 
     const fingerprint = workspaceFingerprint.collectWorkspaceFingerprint(root);
     expect(fingerprint.dirty).toBe(false);
+  });
+});
+
+describe('workspace-context hook', () => {
+  let root;
+  beforeEach(() => { root = makeSandbox(); });
+  afterEach(() => cleanup(root));
+
+  it('reports single-project mode when projects.json is absent', () => {
+    const res = workspaceContextHook.handle({ sessionId: 's1' }, ctx(root));
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('single-project');
+    expect(res.stdout).toContain('specs/');
+  });
+
+  it('reports active project paths in multi-project mode', () => {
+    fs.mkdirSync(path.join(root, '.jumpstart', 'state'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'projects', 'proj-a', '.jumpstart', 'state'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'projects', 'proj-a', 'specs'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'projects.json'),
+      JSON.stringify({
+        workspace: { id: 'ws-test', enabled: true },
+        projects: [{
+          id: 'proj-a',
+          name: 'Project A',
+          path: 'projects/proj-a',
+          status: 'phase-1',
+        }],
+        active_project: 'proj-a',
+        settings: {},
+      })
+    );
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'state', 'workspace-state.json'),
+      JSON.stringify({
+        active_project_id: 'proj-a',
+        workspace_resume_context: {},
+      })
+    );
+    fs.writeFileSync(
+      path.join(root, 'projects', 'proj-a', '.jumpstart', 'state', 'state.json'),
+      JSON.stringify({ current_phase: 1, approved_artifacts: [] })
+    );
+
+    const res = workspaceContextHook.handle({ sessionId: 's1' }, ctx(root));
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('proj-a');
+    expect(res.stdout).toContain('projects/proj-a/specs');
   });
 });
 
@@ -1154,24 +1204,24 @@ describe('session-analytics hook', () => {
 // ─── .github/hooks/autonav.json smoke test ──────────────────────────────────
 
 describe('.github/hooks/autonav.json', () => {
-  it('is valid JSON and registers all 23 hooks', () => {
+  it('is valid JSON and registers all 24 hooks', () => {
     const cfg = JSON.parse(
       fs.readFileSync(path.join(HOOKS_DIR, 'autonav.json'), 'utf8')
     );
     expect(cfg.hooks).toBeDefined();
-    expect(cfg.hooks.SessionStart).toHaveLength(4);
+    expect(cfg.hooks.SessionStart).toHaveLength(5);
     expect(cfg.hooks.UserPromptSubmit).toHaveLength(3);
     expect(cfg.hooks.PreCompact).toHaveLength(1);
     expect(cfg.hooks.PreToolUse).toHaveLength(10);
     expect(cfg.hooks.PostToolUse).toHaveLength(3);
     expect(cfg.hooks.Stop).toHaveLength(2);
 
-    // Count unique scripts referenced — must be exactly 23.
+    // Count unique scripts referenced — must be exactly 24.
     const commands = new Set();
     for (const event of Object.keys(cfg.hooks)) {
       for (const hook of cfg.hooks[event]) commands.add(hook.command);
     }
-    expect(commands.size).toBe(23);
+    expect(commands.size).toBe(24);
   });
 
   it('every registered script file exists', () => {

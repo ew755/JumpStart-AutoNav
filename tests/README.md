@@ -19,6 +19,22 @@ npm install
 | `npm run test:requirements` | Requirements Extractor feature validation |
 | `npm run test:all` | Run every test suite |
 
+### Workspace tests
+
+Multi-project workspace capabilities have dedicated tests and fixtures:
+
+```bash
+npx vitest run tests/test-workspace-context.test.js tests/test-workspace-manager.test.js tests/test-workspace-migration.test.js tests/test-workspace-integration.test.js tests/test-phase-gate-updater.test.js
+```
+
+**Fixtures:** `fixtures/workspace/` — `single-project/`, `migrated-root/`, and `multi-project/` layouts. Regenerate with:
+
+```bash
+node tests/fixtures/workspace/generate-fixtures.mjs
+```
+
+See `fixtures/workspace/README.md` for manual smoke-test commands.
+
 You can also use the CLI:
 
 ```bash
@@ -105,9 +121,14 @@ tests/
 ├── test-spec-quality.test.js              # Layer 3
 ├── test-requirements-extractor.test.js    # Requirements Extractor feature
 ├── test-regression.test.js                # Layer 5
+├── test-workspace-context.test.js         # Workspace context detection
+├── test-workspace-manager.test.js         # Registry operations
+├── test-workspace-migration.test.js       # Single→multi migration
+├── test-workspace-integration.test.js     # End-to-end workspace flows
 ├── fixtures/
 │   ├── valid/                   # Conforming spec artifacts
-│   └── invalid/                 # Intentionally broken artifacts
+│   ├── invalid/                 # Intentionally broken artifacts
+│   └── workspace/               # Multi-project workspace layouts
 ├── adversarial-review-tests/
 │   └── known-violations.md      # Layer 4 adversarial fixture
 └── golden-masters/

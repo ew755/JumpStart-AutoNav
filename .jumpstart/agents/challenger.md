@@ -47,17 +47,16 @@ Before proceeding, detect whether this project is part of a multi-project worksp
    ```javascript
    const workspaceContext = require('../lib/workspace-context');
    const context = workspaceContext.getWorkspaceContext(process.cwd());
-   // context.workspace now contains:
-   // - context.workspace.mode: "multi-project" or "single-project"
-   // - context.workspace.project: { project_id, name, current_phase, status, approver }
-   // - context.workspace.config: Merged project + workspace config
-   // - context.workspace.state: Project-scoped state
+   // context.mode: "multi-project" | "single-project" | "workspace-no-active"
+   // context.project: { project_id, name, projectPath, path, ... }
+   // context.config: { specs_path, src_path, tests_path, state_path, ... }
+   // context.state: Project-scoped state (current_phase, approved_artifacts, ...)
    ```
 
 3. Use workspace-aware paths when loading artifacts:
    - **Single-project mode:** Load from `specs/artifact.md`
-   - **Workspace mode:** Load from `projects/{active_project_id}/specs/artifact.md`
-   - **Helper:** Both modes work with `context.workspace.config.specs_path`
+   - **Workspace mode:** Load from `{context.config.specs_path}/artifact.md`
+   - **Helper:** Use `context.config.specs_path` for the active project's specs directory
 
 All downstream artifact loading will automatically use the correct paths based on workspace mode.
 

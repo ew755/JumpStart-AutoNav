@@ -48,7 +48,7 @@ Before proceeding, detect whether this project is part of a multi-project worksp
 
 3. Load upstream artifacts using workspace-aware loader:
    ```javascript
-   const upstream = specLoader.loadUpstreamArtifact(context.workspace, 0);
+   const upstream = specLoader.loadUpstreamArtifact(context, 1);
    if (!upstream.loaded) {
      console.error(`❌ Cannot proceed: ${upstream.error}`);
      process.exit(1);
