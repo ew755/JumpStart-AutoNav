@@ -3,7 +3,7 @@
  * Uses repo paths when present; skips gracefully in sparse checkouts.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -13,14 +13,33 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const root = join(__dirname, '..');
 const pilotRoot = join(root, 'projects', 'proj-workspace-pilot');
+const PILOT_ID = 'proj-workspace-pilot';
 
 const hasPilot = existsSync(join(pilotRoot, 'specs', 'challenger-brief.md'));
 
 describe.skipIf(!hasPilot)('dogfood: proj-workspace-pilot (live repo)', () => {
+  let previousActive;
+
+  beforeAll(() => {
+    const { WorkspaceManager } = require('../lib/workspace-manager.js');
+    const manager = new WorkspaceManager(root);
+    previousActive = manager.config.active_project;
+    if (previousActive !== PILOT_ID) {
+      manager.setActive(PILOT_ID);
+    }
+  });
+
+  afterAll(() => {
+    if (previousActive && previousActive !== PILOT_ID) {
+      const { WorkspaceManager } = require('../lib/workspace-manager.js');
+      new WorkspaceManager(root).setActive(previousActive);
+    }
+  });
+
   it('registry points active project at pilot with phase 4', () => {
     const registry = require(join(root, '.jumpstart/projects.json'));
-    expect(registry.active_project).toBe('proj-workspace-pilot');
-    const pilot = registry.projects.find((p) => p.id === 'proj-workspace-pilot');
+    expect(registry.active_project).toBe(PILOT_ID);
+    const pilot = registry.projects.find((p) => p.id === PILOT_ID);
     expect(pilot.phase).toBe(4);
     expect(pilot.status).toBe('phase-4');
   });
@@ -30,7 +49,7 @@ describe.skipIf(!hasPilot)('dogfood: proj-workspace-pilot (live repo)', () => {
     const { loadSpec, validatePhaseGate } = require('../lib/spec-loader.js');
     const context = getWorkspaceContext(root);
     const spec = loadSpec(context, 'challenger-brief.md');
-    expect(spec.path).toContain('proj-workspace-pilot');
+    expect(spec.path).toContain(PILOT_ID);
     const gate = validatePhaseGate(spec);
     expect(gate.valid).toBe(true);
   });
@@ -38,8 +57,17 @@ describe.skipIf(!hasPilot)('dogfood: proj-workspace-pilot (live repo)', () => {
   it('cross-project dependency blocks Pit Crew review', () => {
     const { WorkspaceManager } = require('../lib/workspace-manager.js');
     const manager = new WorkspaceManager(root);
-    const result = manager.canAdvanceProject('proj-workspace-pilot');
+    expect(manager.config.active_project).toBe(PILOT_ID);
+    const result = manager.canAdvanceProject(PILOT_ID);
     expect(result.allowed).toBe(false);
     expect(result.pitCrewReview).toBe(true);
+  });
+
+  it('validate-deps surfaces blocked dependency with unblock condition', () => {
+    const { WorkspaceManager } = require('../lib/workspace-manager.js');
+    const manager = new WorkspaceManager(root);
+    const result = manager.validateDeps();
+    expect(result.blocked_count).toBeGreaterThan(0);
+    expect(result.blocked[0].unblock_condition).toMatch(/Phase 3/);
   });
 });

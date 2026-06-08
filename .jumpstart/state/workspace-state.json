@@ -2,14 +2,15 @@
   "version": "1.0.0",
   "active_project_id": "proj-default",
   "workspace_resume_context": {
-    "tldr": "proj-default Phase 2 approved; next architecture (unblocks pilot at Phase 3)",
+    "tldr": "proj-default Phase 3 approved; pilot dependency unblocked; Phase 4 next",
     "cross_project_dependencies": [
       {
         "from": "proj-workspace-pilot",
         "to": "proj-default",
         "type": "phase_dependency",
-        "blocked": true,
-        "unblock_condition": "Phase 3"
+        "blocked": false,
+        "unblock_condition": "Phase 3",
+        "unblock_date": "2026-06-08"
       }
     ],
     "workspace_token_budget": 500000,

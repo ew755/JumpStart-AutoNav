@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "current_phase": 2,
-  "last_completed_step": "Phase 2 Plan Approved",
+  "current_phase": 3,
+  "last_completed_step": "Phase 3 Architect Approved",
   "last_phase_approved": "2026-06-08",
   "approved_by": "Eric",
   "approved_artifacts": [
@@ -29,21 +29,27 @@
       "phase": 2,
       "approved_by": "Eric",
       "approval_date": "2026-06-08"
+    },
+    {
+      "artifact": "architecture.md",
+      "phase": 3,
+      "approved_by": "Eric",
+      "approval_date": "2026-06-08"
     }
   ],
   "resume_context": {
-    "tldr": "Phase 2 approved; ready for /jumpstart.architect",
-    "last_action": "PRD approved by Eric",
-    "next_action": "Run Architect for root architecture + implementation plan",
-    "next_command": "/jumpstart.architect",
+    "tldr": "Phase 3 approved; pilot dependency unblocked; ready for /jumpstart.build",
+    "last_action": "approvePhase architecture + workspace P0/P1 fixes",
+    "next_action": "Phase 4 doc/traceability per implementation-plan M2-M4",
+    "next_command": "/jumpstart.build",
     "open_questions": [],
     "key_insights": [
-      "M2 architecture approval unblocks pilot Pit Crew dependency",
-      "Phase 4 is docs/traceability per PRD brownfield scope",
-      "E1-S3 is critical path for cross-project unblock"
+      "checkUnblocks cleared pilot→default on Phase 3 approve",
+      "Dogfood auto set-active/restores proj-default",
+      "validate-deps now surfaces BLOCKED + unblock_condition"
     ],
-    "last_agent": "PM",
-    "last_phase": 2,
-    "last_step": "Phase 2 gate approved"
+    "last_agent": "Architect",
+    "last_phase": 3,
+    "last_step": "Phase 3 gate approved via tools"
   }
 }

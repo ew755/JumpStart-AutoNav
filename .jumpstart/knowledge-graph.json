@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "proj-default",
+      "type": "project",
+      "label": "JumpStart AutoNav",
+      "status": "phase-2",
+      "phase": 2
+    },
+    {
+      "id": "proj-workspace-pilot",
+      "type": "project",
+      "label": "Workspace Pilot",
+      "status": "phase-4",
+      "phase": 4
+    }
+  ],
+  "edges": [
+    {
+      "from": "proj-workspace-pilot",
+      "to": "proj-default",
+      "relation": "phase_dependency",
+      "impact": "blocked",
+      "unblock_condition": "Phase 3"
+    }
+  ],
+  "last_updated": "2026-06-08T19:21:06.576Z"
+}

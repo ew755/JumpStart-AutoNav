@@ -18,6 +18,23 @@ const { WorkspaceManager } = require('../lib/workspace-manager');
 const { upgradeToWorkspace, detectMigrationState } = require('../lib/workspace-migration');
 const { recordPitCrewReview } = require('../lib/workspace-pitcrew-resume');
 
+const PILOT_PROJECT_ID = 'proj-workspace-pilot';
+
+/**
+ * Parse --format=json or --format json from argv.
+ */
+function parseFormatArg(argv, defaultFormat = 'markdown') {
+  const eqArg = argv.find((arg) => arg.startsWith('--format='));
+  if (eqArg) {
+    return eqArg.split('=')[1];
+  }
+  const idx = argv.indexOf('--format');
+  if (idx >= 0 && argv[idx + 1] && !argv[idx + 1].startsWith('--')) {
+    return argv[idx + 1];
+  }
+  return defaultFormat;
+}
+
 function ensureWorkspaceInitialized(rootDir, { autoInit = false } = {}) {
   const state = detectMigrationState(rootDir);
   if (state !== 'single-project') {
@@ -114,19 +131,29 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
         console.log('✅ No cross-project dependencies configured.\n');
         break;
       }
-      if (result.valid) {
-        result.dependencies.forEach((dep) => {
-          console.log(`✅ ${dep.type}: ${dep.from} → ${dep.to}`);
-        });
-      } else {
+      if (!result.valid) {
         result.errors.forEach((error) => console.log(`❌ ${error}`));
       }
-      console.log();
+      result.dependencies.forEach((dep) => {
+        if (dep.blocked) {
+          const unblock = dep.unblock_condition ? ` (unblock: ${dep.unblock_condition})` : '';
+          console.log(`⚠️  BLOCKED ${dep.type}: ${dep.from} → ${dep.to}${unblock}`);
+        } else {
+          console.log(`✅ ${dep.type}: ${dep.from} → ${dep.to}`);
+        }
+      });
+      if (result.blocked_count > 0) {
+        console.log(`\nℹ️  ${result.blocked_count} blocked dependency(ies). Run /jumpstart.pitcrew or workspace can-advance for details.\n`);
+      } else {
+        console.log();
+      }
+      if (!result.valid) {
+        process.exit(1);
+      }
       break;
     }
     case 'report': {
-      const formatArg = argv.find((arg) => arg.startsWith('--format='));
-      const format = formatArg ? formatArg.split('=')[1] : 'markdown';
+      const format = parseFormatArg(argv, 'markdown');
       if (argv.includes('--cost-breakdown')) {
         const summary = manager.costBreakdown();
         console.log(require('../lib/workspace-cost').formatCostReport(summary));
@@ -462,4 +489,5 @@ if (require.main === module) {
 
 module.exports = {
   runWorkspaceCli,
+  parseFormatArg,
 };

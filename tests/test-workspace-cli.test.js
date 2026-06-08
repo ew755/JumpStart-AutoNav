@@ -80,3 +80,20 @@ describe('runWorkspaceCli', () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 });
+
+describe('parseFormatArg', () => {
+  it('parses --format=json', async () => {
+    const { parseFormatArg } = await import('../bin/workspace.js');
+    expect(parseFormatArg(['report', '--format=json'])).toBe('json');
+  });
+
+  it('parses --format json with space', async () => {
+    const { parseFormatArg } = await import('../bin/workspace.js');
+    expect(parseFormatArg(['report', '--format', 'json'])).toBe('json');
+  });
+
+  it('defaults to markdown', async () => {
+    const { parseFormatArg } = await import('../bin/workspace.js');
+    expect(parseFormatArg(['report'])).toBe('markdown');
+  });
+});

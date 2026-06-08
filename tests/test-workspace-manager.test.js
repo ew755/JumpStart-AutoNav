@@ -98,6 +98,21 @@ describe('WorkspaceManager', () => {
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
     });
+
+    it('reports blocked dependencies separately from structural errors', () => {
+      manager.state.workspace_resume_context.cross_project_dependencies.push({
+        from: 'proj-b',
+        to: 'proj-a',
+        type: 'phase_dependency',
+        blocked: true,
+        unblock_condition: 'Phase 3',
+      });
+
+      const result = manager.validateDeps();
+      expect(result.valid).toBe(true);
+      expect(result.blocked_count).toBe(1);
+      expect(result.blocked[0].unblock_condition).toBe('Phase 3');
+    });
   });
 
   describe('Token Tracking', () => {
