@@ -79,6 +79,19 @@ npm test -- tests/test-hooks.test.js
 
 All of these are existing AutoNav-managed paths — no new top-level directory is introduced (honours `simplicity_gate` in `config.yaml`).
 
+## Must Have tier (workspace release — ADR-015)
+
+For the npm workspace release, four governance surfaces are **Must Have** (documented in `.jumpstart/MULTI_WORKSPACE.md`):
+
+| Surface | Location |
+|---------|----------|
+| Pit Crew guard | `workspace-pitcrew-guard.js` (SessionStart) |
+| Workspace context | `workspace-context.js` (SessionStart) + `lib/workspace-context.js` |
+| Phase boundary | `phase-boundary-guard.js` (PreToolUse) |
+| Spec redirect | `lib/workspace-path-resolver.js` + `bin/lib/tool-bridge.js` |
+
+The numbered table above lists the full Copilot hook catalog (26 hooks); only the Must Have subset is required for workspace product acceptance.
+
 ## Security note
 
 Per the VS Code hooks safety guidance, this directory **must not be writable by the agent itself**. Hook #3 (`block-agent-self-modification.js`) enforces this by blocking any edit targeting `.github/hooks/`. If you need to update a hook, edit it directly (outside the agent session) or temporarily set `JUMPSTART_HOOK_ALLOW_AGENT_EDITS=1`.

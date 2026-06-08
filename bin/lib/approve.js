@@ -9,6 +9,73 @@ const { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } = r
 const { join, relative } = require('path');
 const { getWorkflowSettings, setWorkflowCurrentPhase } = require('./config-yaml.cjs');
 
+function detectWorkspaceMode(rootDir) {
+  try {
+    const { detectWorkspaceMode: detect } = require('../../lib/workspace-context');
+    return detect(rootDir);
+  } catch {
+    return false;
+  }
+}
+
+function updateArtifactFrontmatter(content, { approver, dateStr }) {
+  if (!/^---\r?\n/m.test(content)) {
+    return content;
+  }
+  let updated = content;
+  updated = updated.replace(/^status:\s*.+$/m, 'status: Approved');
+  updated = updated.replace(/^approved_by:\s*.+$/m, `approved_by: ${approver}`);
+  updated = updated.replace(/^approval_date:\s*.+$/m, `approval_date: ${dateStr}`);
+  return updated;
+}
+
+/**
+ * Workspace-aware phase gate: approvePhase + registry sync.
+ * Falls back to legacy updateState when phase cannot be inferred.
+ */
+function syncPhaseGateApproval(root, relPath, approver, statePath) {
+  try {
+    const { getWorkspaceContext } = require('../../lib/workspace-context');
+    const { approvePhase } = require('../../lib/phase-gate-updater');
+    const context = getWorkspaceContext(root);
+    const phaseResult = approvePhase(context, relPath, approver);
+
+    if (!phaseResult.success) {
+      updateState({ approved_artifact: relPath }, statePath);
+      return {
+        success: false,
+        error: phaseResult.error,
+        phaseResult: null,
+        usedLegacyState: true,
+      };
+    }
+
+    if (detectWorkspaceMode(root)) {
+      try {
+        const { WorkspaceManager } = require('../../lib/workspace-manager');
+        const manager = new WorkspaceManager(root);
+        manager.syncPull();
+      } catch (syncError) {
+        return {
+          success: true,
+          phaseResult,
+          syncWarning: syncError.message,
+        };
+      }
+    }
+
+    return { success: true, phaseResult, usedLegacyState: false };
+  } catch (error) {
+    updateState({ approved_artifact: relPath }, statePath);
+    return {
+      success: true,
+      phaseResult: null,
+      usedLegacyState: true,
+      syncWarning: error.message,
+    };
+  }
+}
+
 const AGENT_COMMANDS = {
   scout: '/jumpstart.scout',
   challenger: '/jumpstart.challenge',
@@ -278,9 +345,11 @@ function approveArtifact(filePath, options = {}) {
   content = content.replace(/(\*\*Approval date:\*\*)\s*.+/i, `$1 ${dateStr}`);
   content = content.replace(/(\*\*Status:\*\*)\s*.+/i, '$1 Approved');
 
+  content = updateArtifactFrontmatter(content, { approver, dateStr });
+
   writeFileSync(fullPath, content, 'utf8');
 
-  updateState({ approved_artifact: relPath }, statePath);
+  const gateSync = syncPhaseGateApproval(root, relPath, approver, statePath);
 
   // Record approval in timeline
   if (_timelineHook) {
@@ -332,7 +401,10 @@ function approveArtifact(filePath, options = {}) {
     approver,
     date: dateStr,
     handoff_info: handoffInfo,
-    auto_handoff: autoHandoff
+    auto_handoff: autoHandoff,
+    phase_gate: gateSync.phaseResult || null,
+    unblocked_projects: gateSync.phaseResult?.unblocked_projects || [],
+    workspace_sync_warning: gateSync.syncWarning || null,
   };
 }
 
@@ -409,6 +481,15 @@ function renderApprovalResult(result) {
   lines.push(`  ✅ Approved: ${result.artifact}`);
   lines.push(`     Approver: ${result.approver}`);
   lines.push(`     Date: ${result.date}`);
+
+  if (result.unblocked_projects && result.unblocked_projects.length > 0) {
+    lines.push(`     Unblocked: ${result.unblocked_projects.join(', ')}`);
+  }
+
+  if (result.workspace_sync_warning) {
+    lines.push('');
+    lines.push(`  ⚠ Workspace sync: ${result.workspace_sync_warning}`);
+  }
 
   if (result.handoff_info && result.handoff_info.ready) {
     lines.push('');

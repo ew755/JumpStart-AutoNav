@@ -54,20 +54,22 @@ describe.skipIf(!hasPilot)('dogfood: proj-workspace-pilot (live repo)', () => {
     expect(gate.valid).toBe(true);
   });
 
-  it('cross-project dependency blocks Pit Crew review', () => {
+  it('cross-project dependency satisfied after proj-default Phase 3', () => {
     const { WorkspaceManager } = require('../lib/workspace-manager.js');
     const manager = new WorkspaceManager(root);
     expect(manager.config.active_project).toBe(PILOT_ID);
     const result = manager.canAdvanceProject(PILOT_ID);
-    expect(result.allowed).toBe(false);
-    expect(result.pitCrewReview).toBe(true);
+    expect(result.allowed).toBe(true);
+    expect(result.pitCrewReview).not.toBe(true);
   });
 
-  it('validate-deps surfaces blocked dependency with unblock condition', () => {
+  it('validate-deps reports zero blocked dependencies', () => {
     const { WorkspaceManager } = require('../lib/workspace-manager.js');
     const manager = new WorkspaceManager(root);
     const result = manager.validateDeps();
-    expect(result.blocked_count).toBeGreaterThan(0);
-    expect(result.blocked[0].unblock_condition).toMatch(/Phase 3/);
+    expect(result.blocked_count).toBe(0);
+    expect(result.dependencies.length).toBeGreaterThan(0);
+    expect(result.dependencies[0].blocked).toBe(false);
+    expect(result.dependencies[0].unblock_date).toBeTruthy();
   });
 });

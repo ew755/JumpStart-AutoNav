@@ -201,7 +201,10 @@ describe('approve', () => {
       approveArtifact('specs/prd.md', { root: tmpDir, statePath });
 
       const state = loadStateFromDisk(tmpDir);
-      expect(state.approved_artifacts).toContain('specs/prd.md');
+      const hasArtifact = state.approved_artifacts.some(
+        (entry) => entry === 'specs/prd.md' || entry?.artifact === 'prd.md'
+      );
+      expect(hasArtifact).toBe(true);
     });
 
     it('returns handoff info when available', async () => {

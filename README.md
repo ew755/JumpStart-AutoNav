@@ -941,12 +941,24 @@ npx jumpstart-mode workspace status
 # Switch active project (agents scope specs to this project)
 npx jumpstart-mode workspace set-active proj-my-feature
 
-# Validate cross-project dependencies
+# Validate cross-project dependencies (⚠️ BLOCKED deps show unblock condition)
 npx jumpstart-mode workspace validate-deps
 
 # Detect drift between registry and per-project state
 npx jumpstart-mode workspace sync --audit
-npx jumpstart-mode workspace remove-project proj-old --confirm
+npx jumpstart-mode workspace sync --pull
+
+# JSON report includes cross_project_dependencies (use --format=json or --format json)
+npx jumpstart-mode workspace report --format=json
+
+# Live workspace regression (auto-switches to pilot, restores active project)
+npm run dogfood:workspace
+
+# Full mock headless multi-workspace analyst path
+npm run dogfood:workspace:headless
+
+# Approve phase artifacts (unified: gate markdown + approvePhase + registry sync)
+npx jumpstart-mode approve specs/prd.md --approver Eric
 ```
 
 ### Layout

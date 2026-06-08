@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "current_phase": 3,
-  "last_completed_step": "Phase 3 Architect Approved",
+  "current_phase": 4,
+  "last_completed_step": "Phase 4 Build complete — release 1.2.0",
   "last_phase_approved": "2026-06-08",
   "approved_by": "Eric",
   "approved_artifacts": [
@@ -38,18 +38,18 @@
     }
   ],
   "resume_context": {
-    "tldr": "Phase 3 approved; pilot dependency unblocked; ready for /jumpstart.build",
-    "last_action": "approvePhase architecture + workspace P0/P1 fixes",
-    "next_action": "Phase 4 doc/traceability per implementation-plan M2-M4",
-    "next_command": "/jumpstart.build",
+    "tldr": "Phase 4 complete; jumpstart-mode 1.2.0 release candidate ready",
+    "last_action": "M4 semver bump, CHANGELOG, npm pack review",
+    "next_action": "Phase 4 gate approval; npm publish (out of band)",
+    "next_command": "Human approve Phase 4 / npm publish",
     "open_questions": [],
     "key_insights": [
       "checkUnblocks cleared pilot→default on Phase 3 approve",
       "Dogfood auto set-active/restores proj-default",
       "validate-deps now surfaces BLOCKED + unblock_condition"
     ],
-    "last_agent": "Architect",
-    "last_phase": 3,
-    "last_step": "Phase 3 gate approved via tools"
+    "last_agent": "Developer",
+    "last_phase": 4,
+    "last_step": "M4 release candidate 1.2.0"
   }
 }

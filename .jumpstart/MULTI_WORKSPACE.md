@@ -139,11 +139,18 @@ jumpstart-mode workspace active
 # Switch active project
 jumpstart-mode workspace set-active proj-copilot-dashboard
 
-# Validate cross-project dependencies
+# Validate cross-project dependencies (structural errors fail; blocked deps show ⚠️ BLOCKED + unblock condition)
 jumpstart-mode workspace validate-deps
 
-# Generate workspace-level report (aggregate token usage, phases, blockers)
+# Generate workspace-level report (markdown or JSON with cross_project_dependencies)
 jumpstart-mode workspace report --format=markdown
+jumpstart-mode workspace report --format json
+
+# Record Pit Crew outcome
+node bin/workspace.js pitcrew-record --topic="..." --outcome="..."
+
+# Live regression (temporarily sets active project to pilot, then restores)
+npm run dogfood:workspace
 
 # Archive a completed project
 jumpstart-mode workspace archive proj-token-usage
@@ -232,6 +239,19 @@ jumpstart-mode workspace pit-crew \
    - ✅ **Approved** → Proceed with phase gate
    - ⚠️ **Conditional** → Require specific remediation
    - ❌ **Blocked** → Flag and escalate
+
+## Must Have hook tier (ADR-015)
+
+Workspace release documents **four governance surfaces** (Must Have). The full 26-hook catalog in [`.github/hooks/README.md`](../.github/hooks/README.md) remains advisory for Copilot sessions.
+
+| Surface | Hook / module | Role |
+|---------|---------------|------|
+| Pit Crew guard | `.github/hooks/workspace-pitcrew-guard.js` | SessionStart — inject cross-project blockers when Pit Crew review is required |
+| Workspace context | `.github/hooks/workspace-context.js` (+ `lib/workspace-context.js`) | SessionStart — active project, spec paths, upstream gates |
+| Phase boundary | `.github/hooks/phase-boundary-guard.js` | Block implementation when upstream specs are missing or unapproved |
+| Spec redirect | `lib/workspace-path-resolver.js` + `bin/lib/tool-bridge.js` | Route spec reads/writes to the active project's `specs/` tree |
+
+**CLI parity:** `jumpstart-mode approve` calls `approvePhase()` (gate markdown + registry sync + dependency unblock). Prefer this over manual `state.json` edits.
 
 ## Shared vs. Isolated Assets
 

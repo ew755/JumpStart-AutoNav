@@ -75,17 +75,16 @@ async function runDogfood() {
     assert(context.config.project.parsed?.project?.name === 'Workspace Pilot', 'YAML parse failed');
   });
 
-  step('Pit Crew guard triggers for blocked dependency', () => {
+  step('Pit Crew guard clear when dependency satisfied', () => {
     const block = buildPitCrewBlock(root);
-    assert(block && block.includes('Pit Crew Review Required'), 'Pit Crew block missing');
-    assert(block.includes(PILOT_PROJECT_ID), 'pilot not mentioned in Pit Crew block');
+    assert(!block, 'Pit Crew block should be absent after Phase 3 approval');
   });
 
-  step('canAdvance blocked by Pit Crew (expected)', () => {
+  step('canAdvance allowed when cross-project dependency unblocked', () => {
     const current = new WorkspaceManager(root);
     const result = current.canAdvanceProject(PILOT_PROJECT_ID);
-    assert(!result.allowed, 'expected Pit Crew to block advance');
-    assert(result.pitCrewReview === true, 'expected pitCrewReview flag');
+    assert(result.allowed, `expected advance allowed: ${result.reason || 'unknown'}`);
+    assert(result.pitCrewReview !== true, 'pitCrewReview should not be set');
   });
 
   step('Approved product brief still valid (not clobbered)', () => {
@@ -140,15 +139,17 @@ async function runDogfood() {
     assert(result.status === 0, `sync audit failed: ${result.stderr}`);
   });
 
-  step('validate-deps surfaces blocked dependency', () => {
+  step('validate-deps shows satisfied cross-project dependency', () => {
     const result = spawnSync(process.execPath, ['bin/workspace.js', 'validate-deps'], {
       cwd: root,
       encoding: 'utf8',
     });
     assert(result.status === 0, `validate-deps failed: ${result.stderr}`);
     const out = `${result.stdout}\n${result.stderr}`;
-    assert(out.includes('BLOCKED'), 'expected BLOCKED marker in validate-deps output');
-    assert(out.includes('unblock: Phase 3'), 'expected unblock_condition in validate-deps output');
+    assert(out.includes('proj-workspace-pilot'), 'pilot dependency missing from validate-deps');
+    assert(out.includes('proj-default'), 'default dependency target missing');
+    assert(!out.includes('BLOCKED'), 'expected no BLOCKED deps after Phase 3 approval');
+    assert(out.includes('✅'), 'expected satisfied dependency marker');
   });
 
   step('Headless multi-workspace scenario (mock analyst setup)', () => {
