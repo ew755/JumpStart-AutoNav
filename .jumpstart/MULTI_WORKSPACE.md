@@ -278,7 +278,27 @@ npx jumpstart-mode workspace status          # 🔗 marks external paths
 
 **Spec ownership:** `lib/workspace-project-paths.js` resolves which project owns a spec path (registry-aware), so `approve` and sync work for sibling paths—not only `projects/{id}/`.
 
-**IDE note:** Claude Code and Cursor should start sessions from the **hub** and use `set-active`; child-repo-only sessions do not load the registry.
+**IDE note:** Claude Code and Cursor should start sessions from the **hub** and use `set-active`; child-repo-only sessions do not load the registry unless `link-sibling` wrote IDE stubs (below).
+
+### IDE injection (sibling checkout opened alone)
+
+`link-sibling` writes into the sibling repo:
+
+| File | Purpose |
+|------|---------|
+| `.jumpstart/hub-link.json` | Points to hub root + project id (machine-readable) |
+| `.jumpstart/SIBLING-WORKSPACE.md` | Agent-readable rules for this checkout |
+| `.cursor/rules/jumpstart-sibling.mdc` | Cursor always-on rule |
+| `CLAUDE.md` | Claude Code sibling block (merged, marked) |
+
+Refresh after hub changes:
+
+```bash
+cd ../frontend
+npx jumpstart-mode workspace context --write
+```
+
+Hub repo gets `.cursor/rules/jumpstart-workspace.mdc` on first `link-sibling`. Copilot uses SessionStart hook `workspace-context.js` (hub or sibling cwd).
 
 ## Must Have hook tier (ADR-015)
 

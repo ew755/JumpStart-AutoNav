@@ -49,6 +49,12 @@ Specs are the source of truth. Code is derived. If there is a mismatch between a
 | `/jumpstart.update [<id>]` | Update installed items to the latest registry version. |
 | `/jumpstart.timeline` | View, query, export, or clear the interaction timeline. Supports `summary`, `report` (markdown/json/html), `query` (filter by phase/agent/type), and `clear`. |
 
+## Multi-project workspace (hub)
+
+If `.jumpstart/projects.json` exists, read `.jumpstart/MULTI_WORKSPACE.md` and run `npx jumpstart-mode workspace active` at session start. Scope specs to the active project path.
+
+If this repo is a **sibling checkout**, read `.jumpstart/SIBLING-WORKSPACE.md` and `.jumpstart/hub-link.json` first.
+
 ## Rules
 
 1. Phases are sequential. Check for Phase Gate Approval (all checkboxes checked, "Approved by" not "Pending").

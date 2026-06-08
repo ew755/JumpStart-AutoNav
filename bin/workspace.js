@@ -17,6 +17,9 @@ const path = require('path');
 const { WorkspaceManager } = require('../lib/workspace-manager');
 const { upgradeToWorkspace, detectMigrationState } = require('../lib/workspace-migration');
 const { recordPitCrewReview } = require('../lib/workspace-pitcrew-resume');
+const { getWorkspaceContext } = require('../lib/workspace-context');
+const { formatWorkspaceContextBlock } = require('../lib/workspace-context-format');
+const { writeSiblingIdeStubs } = require('../lib/workspace-hub-link');
 
 const PILOT_PROJECT_ID = 'proj-workspace-pilot';
 
@@ -87,7 +90,12 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
     if (init.result && !init.result.alreadyMigrated) {
       console.log('ℹ️  Auto-initialized workspace from single-project mode\n');
     }
-  } else if (command && command !== 'help' && detectMigrationState(rootDir) === 'single-project') {
+  } else if (
+    command &&
+    command !== 'help' &&
+    command !== 'context' &&
+    detectMigrationState(rootDir) === 'single-project'
+  ) {
     console.error('❌ Workspace not initialized. Run: jumpstart-mode workspace upgrade');
     process.exit(1);
     return;
@@ -95,6 +103,20 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
 
   if (!command || command === 'help') {
     printHelp();
+    return;
+  }
+
+  if (command === 'context') {
+    const context = getWorkspaceContext(rootDir);
+    const block = formatWorkspaceContextBlock(context, {
+      displayRoot: context.linkedRoot || rootDir,
+    });
+    if (argv.includes('--write') && context.mode === 'sibling-linked') {
+      const written = writeSiblingIdeStubs(rootDir, context);
+      console.log(`✅ Refreshed sibling IDE stubs: ${written.join(', ')}\n`);
+    }
+    console.log(block);
+    console.log('');
     return;
   }
 
@@ -430,6 +452,10 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       if (result.warnings?.length) {
         result.warnings.forEach((w) => console.log(`   ⚠️  ${w}`));
       }
+      if (result.ide_files?.length) {
+        console.log('   IDE stubs:');
+        result.ide_files.forEach((f) => console.log(`     • ${f}`));
+      }
       if (result.set_active) {
         console.log(`   Active project set to ${result.projectId}`);
       } else {
@@ -490,6 +516,7 @@ Commands:
   upgrade             Migrate single-project workspace to multi-project registry
   active              Show the currently active project
   set-active <id>     Switch to a different project
+  context [--write]   Print IDE SessionStart context block (refresh sibling stubs with --write)
   validate-deps       Validate cross-project dependencies
   report [--format]   Generate workspace report (markdown, json, --cost-breakdown)
   projects-in-flight Show projects with active agent locks
@@ -519,6 +546,7 @@ Examples:
   jumpstart-mode workspace report --format=json
   jumpstart-mode workspace create-project --id=proj-example --name="Example" --type=greenfield
   jumpstart-mode workspace link-sibling --id=proj-frontend --name="Frontend" --path=../frontend --init --set-active
+  jumpstart-mode workspace context
   `);
 }
 

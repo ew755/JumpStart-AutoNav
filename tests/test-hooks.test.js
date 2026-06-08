@@ -208,6 +208,56 @@ describe('workspace-context hook', () => {
     expect(res.stdout).toContain('proj-a');
     expect(res.stdout).toContain('projects/proj-a/specs');
   });
+
+  it('reports sibling-linked context when opened on child repo with hub-link.json', () => {
+    const hub = path.join(root, 'hub');
+    const sibling = path.join(root, 'frontend');
+    fs.mkdirSync(path.join(hub, '.jumpstart', 'state'), { recursive: true });
+    fs.mkdirSync(path.join(sibling, 'specs'), { recursive: true });
+    fs.mkdirSync(path.join(sibling, '.jumpstart', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(hub, '.jumpstart', 'projects.json'),
+      JSON.stringify({
+        workspace: { id: 'ws-test', enabled: true },
+        projects: [{
+          id: 'proj-frontend',
+          name: 'Frontend',
+          path: '../frontend',
+          status: 'phase-0',
+          config_path: '../frontend/.jumpstart/config.yaml',
+        }],
+        active_project: 'proj-frontend',
+        settings: {},
+      })
+    );
+    fs.writeFileSync(
+      path.join(hub, '.jumpstart', 'state', 'workspace-state.json'),
+      JSON.stringify({ active_project_id: 'proj-frontend', workspace_resume_context: {} })
+    );
+    fs.writeFileSync(
+      path.join(sibling, '.jumpstart', 'hub-link.json'),
+      JSON.stringify({
+        version: '1.0.0',
+        hub_root: '../hub',
+        project_id: 'proj-frontend',
+        project_name: 'Frontend',
+      })
+    );
+    fs.writeFileSync(
+      path.join(sibling, '.jumpstart', 'state', 'state.json'),
+      JSON.stringify({ current_phase: 0, approved_artifacts: [] })
+    );
+    fs.writeFileSync(
+      path.join(sibling, '.jumpstart', 'config.yaml'),
+      'project:\n  name: Frontend\n  type: greenfield\n'
+    );
+
+    const res = workspaceContextHook.handle({ sessionId: 's1' }, ctx(sibling));
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('sibling-linked');
+    expect(res.stdout).toContain('proj-frontend');
+    expect(res.stdout).toContain('SIBLING-WORKSPACE.md');
+  });
 });
 
 describe('workspace-sync-guard hook', () => {

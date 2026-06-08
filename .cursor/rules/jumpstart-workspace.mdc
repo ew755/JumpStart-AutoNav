@@ -1,0 +1,15 @@
+---
+description: JumpStart multi-project workspace (hub root)
+alwaysApply: true
+---
+
+# JumpStart workspace hub
+
+When `.jumpstart/projects.json` exists:
+
+1. At session start, read `.jumpstart/projects.json` active project or run `npx jumpstart-mode workspace active`.
+2. Scope specs to the active project's `specs/` path (see `.jumpstart/MULTI_WORKSPACE.md`).
+3. For sibling repos (🔗), run `jumpstart-mode workspace link-sibling` from this hub; open the **linked checkout** for implementation work.
+4. Phase gates: `npx jumpstart-mode approve specs/<artifact>.md --approver <name>` from **this hub cwd**.
+
+Monorepo projects live under `projects/{id}/`. Sibling repos use `../` paths in the registry.

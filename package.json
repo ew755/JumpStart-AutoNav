@@ -29,6 +29,7 @@
   "files": [
     ".jumpstart",
     ".github",
+    ".cursor",
     "bin",
     "lib",
     "AGENTS.md",

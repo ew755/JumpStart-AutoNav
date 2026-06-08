@@ -107,7 +107,7 @@ describe('workspace-project-paths', () => {
 });
 
 describe('WorkspaceManager.linkSiblingProject', () => {
-  it('registers sibling with --init and sets active', () => {
+  it('registers sibling with --init, IDE stubs, and sets active', () => {
     const hub = join(programDir, 'hub');
     const frontend = join(programDir, 'frontend');
     mkdirSync(hub, { recursive: true });
@@ -137,12 +137,19 @@ describe('WorkspaceManager.linkSiblingProject', () => {
 
     expect(result.success).toBe(true);
     expect(result.external).toBe(true);
+    expect(result.ide_files?.length).toBeGreaterThan(0);
     expect(existsSync(join(frontend, 'specs'))).toBe(true);
     expect(existsSync(join(frontend, '.jumpstart', 'config.yaml'))).toBe(true);
+    expect(existsSync(join(frontend, '.jumpstart', 'hub-link.json'))).toBe(true);
+    expect(existsSync(join(frontend, '.jumpstart', 'SIBLING-WORKSPACE.md'))).toBe(true);
+    expect(existsSync(join(frontend, '.cursor', 'rules', 'jumpstart-sibling.mdc'))).toBe(true);
+    expect(existsSync(join(hub, '.cursor', 'rules', 'jumpstart-workspace.mdc'))).toBe(true);
     expect(manager.config.active_project).toBe('proj-frontend');
 
-    const entry = manager.config.projects.find((p) => p.id === 'proj-frontend');
-    expect(entry.path).toBe('../frontend');
+    const { getWorkspaceContext } = require('../lib/workspace-context.js');
+    const siblingCtx = getWorkspaceContext(frontend);
+    expect(siblingCtx.mode).toBe('sibling-linked');
+    expect(siblingCtx.project.project_id).toBe('proj-frontend');
   });
 
   it('rejects missing sibling directory', () => {

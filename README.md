@@ -962,6 +962,9 @@ npx jumpstart-mode approve specs/prd.md --approver Eric
 
 # Sibling repo hub: register external git clone
 npx jumpstart-mode workspace link-sibling --id=proj-api --name="API" --path=../api --init --set-active
+
+# Print IDE context block (sibling: refreshes CLAUDE.md / Cursor rules with --write)
+npx jumpstart-mode workspace context
 ```
 
 ### Layout
