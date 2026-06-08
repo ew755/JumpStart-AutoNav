@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "active_project_id": "proj-workspace-pilot",
   "workspace_resume_context": {
-    "tldr": "Phase 3 approved; ready for /jumpstart.build (M3 Pit Crew, M4 headless mock)",
+    "tldr": "Workspace Pilot validation complete (Phase 0-4); dogfood + Pit Crew outcome recorded",
     "cross_project_dependencies": [
       {
         "from": "proj-workspace-pilot",
@@ -14,13 +14,26 @@
     ],
     "workspace_token_budget": 500000,
     "workspace_tokens_used": 0,
-    "last_pit_crew_review": null,
+    "last_pit_crew_review": "2026-06-08T15:48:23.314Z",
     "project_count": 2,
     "projects_in_progress": [
       "proj-default",
       "proj-workspace-pilot"
+    ],
+    "pit_crew_outcomes": [
+      {
+        "date": "2026-06-08T15:48:23.314Z",
+        "topic": "proj-workspace-pilot to proj-default Phase 3 dependency",
+        "outcome": "Pit Crew acknowledged expected block; pilot Phase 4 proceeds independently; proj-default Phase 3 is separate track.",
+        "next_steps": "Complete pilot M3-M4; run proj-default architect separately.",
+        "dependency_ref": {
+          "from": "proj-workspace-pilot",
+          "to": "proj-default",
+          "type": "phase_dependency"
+        }
+      }
     ]
   },
   "project_locks": {},
-  "last_updated": null
+  "last_updated": "2026-06-08T15:48:23.314Z"
 }

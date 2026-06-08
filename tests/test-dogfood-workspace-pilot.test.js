@@ -17,12 +17,12 @@ const pilotRoot = join(root, 'projects', 'proj-workspace-pilot');
 const hasPilot = existsSync(join(pilotRoot, 'specs', 'challenger-brief.md'));
 
 describe.skipIf(!hasPilot)('dogfood: proj-workspace-pilot (live repo)', () => {
-  it('registry points active project at pilot with phase 0', () => {
+  it('registry points active project at pilot with phase 4', () => {
     const registry = require(join(root, '.jumpstart/projects.json'));
     expect(registry.active_project).toBe('proj-workspace-pilot');
     const pilot = registry.projects.find((p) => p.id === 'proj-workspace-pilot');
-    expect(pilot.phase).toBe(3);
-    expect(pilot.status).toBe('phase-3');
+    expect(pilot.phase).toBe(4);
+    expect(pilot.status).toBe('phase-4');
   });
 
   it('challenger brief is approved in pilot specs', () => {

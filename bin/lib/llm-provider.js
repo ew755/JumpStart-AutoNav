@@ -116,11 +116,18 @@ function createProvider(options = {}) {
         totalCompletionTokens += completionTokens;
         totalTokens += promptTokens + completionTokens;
 
-        // If a mock registry provides a custom completion, use it
-        let content = 'This is a mock response from the headless agent emulator.';
-        if (mockResponses && typeof mockResponses.getCompletionResponse === 'function') {
+        // If a mock registry provides a custom completion message, use it
+        let message = { role: 'assistant', content: 'This is a mock response from the headless agent emulator.' };
+        if (mockResponses && typeof mockResponses.getCompletionMessage === 'function') {
+          const customMessage = mockResponses.getCompletionMessage(messages, tools);
+          if (customMessage) {
+            message = { role: 'assistant', ...customMessage };
+          }
+        } else if (mockResponses && typeof mockResponses.getCompletionResponse === 'function') {
           const custom = mockResponses.getCompletionResponse(messages);
-          if (custom) content = custom;
+          if (custom) {
+            message.content = custom;
+          }
         }
 
         return {
@@ -130,8 +137,8 @@ function createProvider(options = {}) {
           model: modelConfig.apiModel,
           choices: [{
             index: 0,
-            message: { role: 'assistant', content },
-            finish_reason: 'stop'
+            message,
+            finish_reason: message.tool_calls?.length ? 'tool_calls' : 'stop'
           }],
           usage: {
             prompt_tokens: promptTokens,

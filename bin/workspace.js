@@ -16,6 +16,7 @@
 const path = require('path');
 const { WorkspaceManager } = require('../lib/workspace-manager');
 const { upgradeToWorkspace, detectMigrationState } = require('../lib/workspace-migration');
+const { recordPitCrewReview } = require('../lib/workspace-pitcrew-resume');
 
 function ensureWorkspaceInitialized(rootDir, { autoInit = false } = {}) {
   const state = detectMigrationState(rootDir);
@@ -284,6 +285,43 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       console.log(JSON.stringify(result, null, 2));
       break;
     }
+    case 'pitcrew-record': {
+      const topicArg = argv.find((arg) => arg.startsWith('--topic='));
+      const outcomeArg = argv.find((arg) => arg.startsWith('--outcome='));
+      const nextStepsArg = argv.find((arg) => arg.startsWith('--next-steps='));
+      const fromArg = argv.find((arg) => arg.startsWith('--from='));
+      const toArg = argv.find((arg) => arg.startsWith('--to='));
+
+      const topic = topicArg ? topicArg.split('=').slice(1).join('=') : null;
+      const outcome = outcomeArg ? outcomeArg.split('=').slice(1).join('=') : null;
+
+      if (!topic || !outcome) {
+        console.error('❌ Usage: workspace pitcrew-record --topic="..." --outcome="..." [--next-steps="..."] [--from=proj-a] [--to=proj-b]');
+        process.exit(1);
+        return;
+      }
+
+      try {
+        const result = recordPitCrewReview(rootDir, {
+          topic,
+          outcome,
+          nextSteps: nextStepsArg ? nextStepsArg.split('=').slice(1).join('=') : undefined,
+          dependencyRef: fromArg || toArg
+            ? {
+                from: fromArg ? fromArg.split('=')[1] : undefined,
+                to: toArg ? toArg.split('=')[1] : undefined,
+                type: 'phase_dependency',
+              }
+            : undefined,
+        });
+        console.log('✅ Pit Crew outcome recorded');
+        console.log(JSON.stringify(result, null, 2));
+      } catch (error) {
+        console.error(`❌ ${error.message}`);
+        process.exit(1);
+      }
+      break;
+    }
     case 'sync':
       if (subcommand === '--audit') {
         manager.syncAudit(projectIdValue);
@@ -402,6 +440,7 @@ Commands:
   audit-adr-awareness <id>  List upstream ADRs affecting a project
   knowledge-graph     Build/export graph (--format=json|graphviz)
   query-graph <query> Query graph (downstream-of, blocks, impact-of)
+  pitcrew-record      Record Pit Crew outcome (--topic=, --outcome=, optional --next-steps=, --from=, --to=)
   sync                Sync projects.json with state files (--audit, --pull, --push)
   create-project      Create a new project
   archive <id>        Archive a completed project

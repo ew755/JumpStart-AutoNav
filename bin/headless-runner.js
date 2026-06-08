@@ -34,7 +34,7 @@ const chalk = require('chalk');
 const { createProvider, listModels } = require('./lib/llm-provider');
 const { createToolBridge } = require('./lib/tool-bridge');
 const { getToolsForPhase } = require('./lib/tool-schemas');
-const { createMockRegistry, createPersonaRegistry } = require('./lib/mock-responses');
+const { createMockRegistry, createPersonaRegistry, createMultiWorkspaceAnalystRegistry } = require('./lib/mock-responses');
 const { SimulationTracer } = require('./lib/simulation-tracer');
 const {
   isMultiWorkspaceScenario,
@@ -366,6 +366,17 @@ class HeadlessRunner {
   }
   
   async initializeProviders(agentName) {
+    if (this.options.mock) {
+      if (
+        this.options.scenario === 'multi-workspace' &&
+        agentName === 'analyst'
+      ) {
+        this.mockRegistry = createMultiWorkspaceAnalystRegistry();
+      } else if (!this.mockRegistry) {
+        this.mockRegistry = createPersonaRegistry(this.options.persona);
+      }
+    }
+
     // Initialize agent provider
     this.agentProvider = createProvider({
       model: this.options.model,

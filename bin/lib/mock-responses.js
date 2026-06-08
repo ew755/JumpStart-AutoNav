@@ -7,6 +7,9 @@
 
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 // ─── Default Responses ───────────────────────────────────────────────────────
 
 const DEFAULT_ASK_RESPONSES = {
@@ -133,6 +136,61 @@ function createPersonaRegistry(persona) {
   return registry;
 }
 
+const MULTI_WORKSPACE_ANALYST_BRIEF = path.join(
+  __dirname,
+  '../../tests/e2e/scenarios/multi-workspace/02-analyst/product-brief.md'
+);
+
+/**
+ * Mock registry for headless analyst on multi-workspace scenario.
+ * Emits create_file tool call on first turn, completion text on second.
+ * @returns {object}
+ */
+function createMultiWorkspaceAnalystRegistry() {
+  const registry = createPersonaRegistry('compliant-user');
+  let completionTurn = 0;
+
+  registry.getCompletionMessage = function getCompletionMessage(messages, tools) {
+    completionTurn++;
+
+    if (completionTurn === 1) {
+      const briefContent = fs.readFileSync(MULTI_WORKSPACE_ANALYST_BRIEF, 'utf8');
+      return {
+        role: 'assistant',
+        content: 'Creating the product brief under the active project specs directory.',
+        tool_calls: [{
+          id: `call_mock_analyst_${Date.now()}`,
+          type: 'function',
+          function: {
+            name: 'create_file',
+            arguments: JSON.stringify({
+              filePath: 'specs/product-brief.md',
+              content: briefContent,
+            }),
+          },
+        }],
+      };
+    }
+
+    return {
+      role: 'assistant',
+      content:
+        'Product brief complete. Phase gate approval section is ready. Please review and approve the artifact.',
+    };
+  };
+
+  registry.getCompletionResponse = function getCompletionResponse(messages) {
+    const message = registry.getCompletionMessage(messages);
+    return message.content;
+  };
+
+  return registry;
+}
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
-module.exports = { createMockRegistry, createPersonaRegistry };
+module.exports = {
+  createMockRegistry,
+  createPersonaRegistry,
+  createMultiWorkspaceAnalystRegistry,
+};

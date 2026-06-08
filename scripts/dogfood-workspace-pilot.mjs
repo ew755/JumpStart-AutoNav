@@ -138,6 +138,7 @@ step('workspace sync --audit (CLI)', () => {
 });
 
 step('Headless multi-workspace scenario (mock analyst setup)', () => {
+  // Setup-only smoke (--max-turns 3). Full analyst completion: npm run dogfood:workspace:headless
   const result = spawnSync(
     process.execPath,
     [
