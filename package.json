@@ -56,6 +56,8 @@
     "emulate:full": "node bin/headless-runner.js --agent challenger,analyst,pm,architect",
     "dogfood:workspace": "node scripts/dogfood-workspace-pilot.mjs",
     "dogfood:workspace:headless": "node bin/headless-runner.js --agent analyst --scenario multi-workspace --mock --max-turns 8",
+    "test:workspace-layouts": "vitest run tests/test-workspace-layout-scenarios.test.js tests/test-workspace-sibling.test.js",
+    "smoke:workspace-layouts": "node scripts/smoke-workspace-layout-scenarios.mjs",
     "prepublishOnly": "node bin/cli.js --help"
   },
   "dependencies": {

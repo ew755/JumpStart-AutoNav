@@ -42,7 +42,7 @@
           },
           "path": {
             "type": "string",
-            "description": "Relative path to project root (e.g., 'projects/token-usage', '.')"
+            "description": "Relative path to project root (e.g. 'projects/token-usage', '.', '../frontend' for sibling repos)"
           },
           "type": {
             "type": "string",

@@ -126,27 +126,44 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       break;
     case 'validate-deps': {
       const result = manager.validateDeps();
-      console.log('\n🔗 Validating Cross-Project Dependencies\n');
+      console.log('\n🔗 Validating Workspace Projects & Dependencies\n');
+
+      if (result.project_paths?.length) {
+        console.log('Registered projects:');
+        result.project_paths.forEach((entry) => {
+          const kind = entry.external ? '🔗 sibling' : '📁 monorepo';
+          console.log(`  ${kind} ${entry.project_id} → ${entry.path}`);
+          entry.warnings.forEach((warning) => console.log(`     ⚠️  ${warning}`));
+          entry.errors.forEach((error) => console.log(`     ❌ ${error}`));
+        });
+        if (result.sibling_count > 0) {
+          console.log(`\nℹ️  ${result.sibling_count} sibling repo(s) registered. Run CLI from hub root.\n`);
+        } else {
+          console.log();
+        }
+      }
+
       if (result.dependencies.length === 0) {
         console.log('✅ No cross-project dependencies configured.\n');
-        break;
-      }
-      if (!result.valid) {
-        result.errors.forEach((error) => console.log(`❌ ${error}`));
-      }
-      result.dependencies.forEach((dep) => {
-        if (dep.blocked) {
-          const unblock = dep.unblock_condition ? ` (unblock: ${dep.unblock_condition})` : '';
-          console.log(`⚠️  BLOCKED ${dep.type}: ${dep.from} → ${dep.to}${unblock}`);
-        } else {
-          console.log(`✅ ${dep.type}: ${dep.from} → ${dep.to}`);
-        }
-      });
-      if (result.blocked_count > 0) {
-        console.log(`\nℹ️  ${result.blocked_count} blocked dependency(ies). Run /jumpstart.pitcrew or workspace can-advance for details.\n`);
       } else {
-        console.log();
+        if (!result.valid) {
+          result.errors.forEach((error) => console.log(`❌ ${error}`));
+        }
+        result.dependencies.forEach((dep) => {
+          if (dep.blocked) {
+            const unblock = dep.unblock_condition ? ` (unblock: ${dep.unblock_condition})` : '';
+            console.log(`⚠️  BLOCKED ${dep.type}: ${dep.from} → ${dep.to}${unblock}`);
+          } else {
+            console.log(`✅ ${dep.type}: ${dep.from} → ${dep.to}`);
+          }
+        });
+        if (result.blocked_count > 0) {
+          console.log(`\nℹ️  ${result.blocked_count} blocked dependency(ies). Run /jumpstart.pitcrew or workspace can-advance for details.\n`);
+        } else {
+          console.log();
+        }
       }
+
       if (!result.valid) {
         process.exit(1);
       }
@@ -400,6 +417,26 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       console.log(`   Next: jumpstart-mode workspace set-active ${result.projectId}`);
       break;
     }
+    case 'link-sibling': {
+      const result = manager.linkSiblingProject(argv.slice(1));
+      if (!result.success) {
+        console.error(`❌ ${result.error}`);
+        process.exit(1);
+        return;
+      }
+      console.log(`✅ Sibling repo linked: ${result.projectId}`);
+      console.log(`   Path: ${result.projectPath}`);
+      console.log(`   Absolute: ${result.absolutePath}`);
+      if (result.warnings?.length) {
+        result.warnings.forEach((w) => console.log(`   ⚠️  ${w}`));
+      }
+      if (result.set_active) {
+        console.log(`   Active project set to ${result.projectId}`);
+      } else {
+        console.log(`   Next: jumpstart-mode workspace set-active ${result.projectId}`);
+      }
+      break;
+    }
     case 'remove-project': {
       const confirm = argv.includes('--confirm');
       const deleteFiles = argv.includes('--delete-files');
@@ -469,7 +506,8 @@ Commands:
   query-graph <query> Query graph (downstream-of, blocks, impact-of)
   pitcrew-record      Record Pit Crew outcome (--topic=, --outcome=, optional --next-steps=, --from=, --to=)
   sync                Sync projects.json with state files (--audit, --pull, --push)
-  create-project      Create a new project
+  create-project      Create a new nested project under projects/
+  link-sibling        Register an existing sibling repo (--path=../repo, optional --init)
   archive <id>        Archive a completed project
   unarchive <id>      Restore an archived project
   remove-project <id> Remove from registry (--confirm, optional --delete-files)
@@ -480,6 +518,7 @@ Examples:
   jumpstart-mode workspace set-active proj-example
   jumpstart-mode workspace report --format=json
   jumpstart-mode workspace create-project --id=proj-example --name="Example" --type=greenfield
+  jumpstart-mode workspace link-sibling --id=proj-frontend --name="Frontend" --path=../frontend --init --set-active
   `);
 }
 

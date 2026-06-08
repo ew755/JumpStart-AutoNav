@@ -959,6 +959,9 @@ npm run dogfood:workspace:headless
 
 # Approve phase artifacts (unified: gate markdown + approvePhase + registry sync)
 npx jumpstart-mode approve specs/prd.md --approver Eric
+
+# Sibling repo hub: register external git clone
+npx jumpstart-mode workspace link-sibling --id=proj-api --name="API" --path=../api --init --set-active
 ```
 
 ### Layout

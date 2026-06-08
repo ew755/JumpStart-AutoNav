@@ -15,6 +15,7 @@ const {
   extractSessionId,
 } = require('./lib/common');
 const { getWorkspaceContext } = require('../../lib/workspace-context');
+const { isSiblingPath } = require('../../lib/workspace-project-paths');
 
 function relativeFromRoot(root, absolutePath) {
   if (!absolutePath) return null;
@@ -46,8 +47,11 @@ function buildWorkspaceContextBlock(root) {
   const srcRel = relativeFromRoot(root, context.config?.src_path) || 'src';
   const testsRel = relativeFromRoot(root, context.config?.tests_path) || 'tests';
   const phase = context.state?.current_phase;
+  const siblingNote = isSiblingPath(project.path || '')
+    ? 'Sibling repo: run jumpstart-mode from hub root; child repo alone does not load projects.json.'
+    : null;
 
-  return [
+  const lines = [
     '[Jump Start Workspace Context]',
     `Mode: ${context.mode}`,
     `Active project: ${project.project_id} (${project.name})`,
@@ -57,7 +61,12 @@ function buildWorkspaceContextBlock(root) {
     `Source: ${srcRel}/`,
     `Tests: ${testsRel}/`,
     'Load artifacts from the paths above — not the global specs/ root unless active project path is ".".',
-  ].join('\n');
+  ];
+  if (siblingNote) {
+    lines.push(siblingNote);
+  }
+
+  return lines.join('\n');
 }
 
 function handle(input, ctx) {

@@ -53,6 +53,8 @@ describe('WorkspaceManager', () => {
     };
 
     writeWorkspaceFiles(tmpDir, config, state);
+    mkdirSync(join(tmpDir, 'proj-a', 'specs'), { recursive: true });
+    mkdirSync(join(tmpDir, 'proj-b', 'specs'), { recursive: true });
     manager = new WorkspaceManager(tmpDir);
   });
 

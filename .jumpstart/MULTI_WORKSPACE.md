@@ -240,6 +240,46 @@ jumpstart-mode workspace pit-crew \
    - ⚠️ **Conditional** → Require specific remediation
    - ❌ **Blocked** → Flag and escalate
 
+## Sibling repository hub (multi-repo)
+
+When each product lives in its **own git repo**, use a **hub repo** that owns `.jumpstart/projects.json` and register siblings with relative paths:
+
+```text
+~/program/
+├── jumpstart-hub/          ← open in IDE for phase work; run CLI here
+├── frontend/               ← separate git clone
+└── backend/                ← separate git clone
+```
+
+### Register a sibling
+
+```bash
+cd jumpstart-hub
+npx jumpstart-mode workspace upgrade   # once, if needed
+
+# Link existing clone (validates layout; --init scaffolds missing JumpStart files)
+npx jumpstart-mode workspace link-sibling \
+  --id=proj-frontend \
+  --name="Frontend App" \
+  --path=../frontend \
+  --init \
+  --set-active
+
+npx jumpstart-mode workspace validate-deps   # shows 🔗 sibling + dependency status
+npx jumpstart-mode workspace status          # 🔗 marks external paths
+```
+
+| Command | Monorepo (`projects/foo`) | Sibling hub (`../foo`) |
+|---------|---------------------------|-------------------------|
+| `create-project` | ✅ scaffolds under hub | ❌ use `link-sibling` |
+| `link-sibling` | ❌ | ✅ registers existing checkout |
+| `set-active` / spec load / approve | ✅ | ✅ (run from hub) |
+| Copilot hooks | ✅ when hub is workspace root | ⚠️ open hub, not child repo alone |
+
+**Spec ownership:** `lib/workspace-project-paths.js` resolves which project owns a spec path (registry-aware), so `approve` and sync work for sibling paths—not only `projects/{id}/`.
+
+**IDE note:** Claude Code and Cursor should start sessions from the **hub** and use `set-active`; child-repo-only sessions do not load the registry.
+
 ## Must Have hook tier (ADR-015)
 
 Workspace release documents **four governance surfaces** (Must Have). The full 26-hook catalog in [`.github/hooks/README.md`](../.github/hooks/README.md) remains advisory for Copilot sessions.

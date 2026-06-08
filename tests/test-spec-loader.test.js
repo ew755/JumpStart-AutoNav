@@ -331,4 +331,30 @@ describe('inferOwnerProject', () => {
     const specPath = 'projects/proj-cx-consumer-api/specs/decisions/ADR-001.md';
     expect(inferOwnerProject(specPath)).toBe('proj-cx-consumer-api');
   });
+
+  it('resolves sibling repo specs via registry when rootDir provided', () => {
+    const hub = join(tmpDir, 'hub');
+    const sibling = join(tmpDir, 'frontend');
+    mkdirSync(join(hub, '.jumpstart', 'state'), { recursive: true });
+    writeFileSync(
+      join(hub, '.jumpstart', 'projects.json'),
+      JSON.stringify({
+        workspace: { id: 'w', enabled: true },
+        projects: [
+          {
+            id: 'proj-frontend',
+            name: 'Frontend',
+            path: '../frontend',
+            status: 'phase-0',
+            config_path: '../frontend/.jumpstart/config.yaml',
+          },
+        ],
+        active_project: 'proj-frontend',
+        settings: {},
+      })
+    );
+    mkdirSync(join(sibling, 'specs'), { recursive: true });
+    const specPath = join(sibling, 'specs', 'prd.md');
+    expect(inferOwnerProject(specPath, hub)).toBe('proj-frontend');
+  });
 });
