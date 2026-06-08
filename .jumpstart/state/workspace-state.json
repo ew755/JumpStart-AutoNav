@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "active_project_id": "proj-default",
   "workspace_resume_context": {
-    "tldr": "proj-default Phase 0 approved; ready for /jumpstart.analyze",
+    "tldr": "proj-default Phase 1 approved; workspace-first MVP scoped; next PRD",
     "cross_project_dependencies": [
       {
         "from": "proj-workspace-pilot",
