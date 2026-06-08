@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "current_phase": 0,
-  "last_completed_step": "Phase 0 Challenge Approved",
+  "current_phase": 1,
+  "last_completed_step": "Phase 1 Analyze Approved",
   "last_phase_approved": "2026-06-08",
   "approved_by": "Eric",
   "approved_artifacts": [
@@ -10,19 +10,28 @@
       "phase": 0,
       "approved_by": "Eric",
       "approval_date": "2026-06-08"
+    },
+    {
+      "artifact": "product-brief.md",
+      "phase": 1,
+      "approved_by": "Eric",
+      "approval_date": "2026-06-08"
     }
   ],
   "resume_context": {
-    "tldr": "Phase 0 approved; Phase 1 product brief drafted via dogfood pass",
-    "last_action": "Dogfood script wrote product-brief.md to pilot specs",
-    "next_action": "Review product brief and run /jumpstart.analyze for full Phase 1",
-    "next_command": "/jumpstart.analyze",
-    "open_questions": [],
-    "key_insights": [
-      "Dogfood validates nested specs path and Pit Crew cross-project gate"
+    "tldr": "Phase 1 approved; ready for PM (Phase 2)",
+    "last_action": "Product brief approved by Eric",
+    "next_action": "Run PM to produce PRD",
+    "next_command": "/jumpstart.plan",
+    "open_questions": [
+      "Should PM run abbreviated requirements pass for validation-only pilot?"
     ],
-    "last_agent": "Challenger",
-    "last_phase": 0,
-    "last_step": "Phase gate approval"
+    "key_insights": [
+      "Pilot MVP = dogfood script + nested specs layout",
+      "Pit Crew block on proj-default dependency is expected"
+    ],
+    "last_agent": "Analyst",
+    "last_phase": 1,
+    "last_step": "Phase 1 gate approved"
   }
 }

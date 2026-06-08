@@ -21,8 +21,8 @@ describe.skipIf(!hasPilot)('dogfood: proj-workspace-pilot (live repo)', () => {
     const registry = require(join(root, '.jumpstart/projects.json'));
     expect(registry.active_project).toBe('proj-workspace-pilot');
     const pilot = registry.projects.find((p) => p.id === 'proj-workspace-pilot');
-    expect(pilot.phase).toBe(0);
-    expect(pilot.status).toBe('phase-0');
+    expect(pilot.phase).toBe(1);
+    expect(pilot.status).toBe('phase-1');
   });
 
   it('challenger brief is approved in pilot specs', () => {

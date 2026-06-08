@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "active_project_id": "proj-workspace-pilot",
   "workspace_resume_context": {
-    "tldr": "Pilot at Phase 0; product brief drafted; Pit Crew gate active on proj-default dependency",
+    "tldr": "Pilot Phase 1 approved; ready for /jumpstart.plan",
     "cross_project_dependencies": [
       {
         "from": "proj-workspace-pilot",

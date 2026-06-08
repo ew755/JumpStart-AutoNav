@@ -25,9 +25,9 @@ Jump Start multi-project workspace infrastructure is implemented (P0–P2) but n
 ## Validation Criteria
 
 - [x] Approved challenger brief lives under `projects/proj-workspace-pilot/specs/`
-- [ ] Analyst produces `product-brief.md` in the same directory (not workspace root)
-- [ ] `workspace sync --audit` reports no drift after phase advancement
-- [ ] Pit Crew guard injects when `proj-workspace-pilot` is active and dependency is blocked
+- [x] Analyst produces `product-brief.md` in the same directory (not workspace root)
+- [x] `workspace sync --audit` reports no drift after phase advancement
+- [x] Pit Crew guard injects when `proj-workspace-pilot` is active and dependency is blocked
 
 ## Phase Gate Approval
 

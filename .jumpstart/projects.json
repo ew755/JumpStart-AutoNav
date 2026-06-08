@@ -10,25 +10,29 @@
       "name": "JumpStart AutoNav",
       "path": ".",
       "type": "greenfield",
-      "status": "initializing",
+      "status": "phase-0",
       "created_at": "2026-06-03T00:00:00Z",
       "config_path": ".jumpstart/config.yaml",
-      "phase": null,
+      "phase": 0,
       "approver": null,
       "locked": false,
-      "lock_reason": null
+      "lock_reason": null,
+      "current_phase": 0
     },
     {
       "id": "proj-workspace-pilot",
       "name": "Workspace Pilot",
       "path": "projects/proj-workspace-pilot",
-      "status": "phase-0",
-      "phase": 0,
+      "status": "phase-1",
+      "phase": 1,
       "type": "greenfield",
       "approver": "Eric",
       "locked": false,
       "created_at": "2026-06-06T00:00:00Z",
-      "config_path": "projects/proj-workspace-pilot/.jumpstart/config.yaml"
+      "config_path": "projects/proj-workspace-pilot/.jumpstart/config.yaml",
+      "current_phase": 1,
+      "last_phase_approved": "2026-06-08",
+      "approved_by": "Eric"
     }
   ],
   "active_project": "proj-workspace-pilot",
@@ -40,5 +44,5 @@
     "aggregate_cost_tracking": true
   },
   "version": "1.0.0",
-  "last_updated": "2026-06-08T00:00:00Z"
+  "last_updated": "2026-06-08T14:58:01.991Z"
 }
