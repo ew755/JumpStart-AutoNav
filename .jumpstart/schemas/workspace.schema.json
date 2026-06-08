@@ -80,6 +80,15 @@
           "lock_reason": {
             "type": ["string", "null"],
             "description": "Reason for lock (e.g., 'Agent Architect running', 'Pending approval')"
+          },
+          "cost_governance": {
+            "type": "object",
+            "properties": {
+              "token_budget": { "type": "integer", "minimum": 0 },
+              "alert_threshold_percent": { "type": "integer", "minimum": 0, "maximum": 100 },
+              "owner": { "type": ["string", "null"] },
+              "cost_center": { "type": ["string", "null"] }
+            }
           }
         }
       }
@@ -116,6 +125,12 @@
           "type": "boolean",
           "default": true,
           "description": "If true, roll up token usage across all projects into workspace usage-log.json"
+        },
+        "max_concurrent_projects": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Maximum concurrent in-flight projects when allow_parallel_projects is true"
         }
       }
     },

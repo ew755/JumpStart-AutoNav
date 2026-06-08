@@ -1,7 +1,7 @@
 # Workspace P0 Implementation Plan
 
-**Status:** P0 complete, P1 in progress  
-**Updated:** 2026-06-06  
+**Status:** P0 complete, P1 complete, P2 complete  
+**Updated:** 2026-06-08  
 **Target:** Operational multi-project agent workflows
 
 ## Completed (P0)
@@ -26,13 +26,14 @@
 - [x] CLI integration tests — `tests/test-workspace-cli.test.js`
 - [x] `approvePhase` end-to-end test — verifies state file writes
 - [x] `remove-project` command — `--confirm`, optional `--delete-files`
+- [x] Headless runner multi-project — `tests/e2e/scenarios/multi-workspace/`, `lib/headless-workspace.js`
+- [x] Schema validation at write — `lib/workspace-validator.js` wired into `saveConfig()` and migration
 
 ## P1 — Remaining
 
 | Item | Priority | Notes |
 |------|----------|-------|
-| Headless runner multi-project | Medium | Scenario with `projects.json` |
-| Schema validation at write | Low | Validate `projects.json` against schema |
+| *(none — P1 complete)* | | |
 
 ## P1 — Next sprint (superseded — see Completed P1 above)
 
@@ -45,19 +46,40 @@
 | ~~`approvePhase` end-to-end test~~ | ~~Medium~~ | Done |
 | ~~`remove-project` command~~ | ~~Medium~~ | Done |
 
-## P2 — Phase 4 (ADR-012)
+## Completed (P2 — ADR-012)
 
-- Parallel project mode with resource limits
-- Cross-workspace cost governance / token aggregation
-- Workspace ADR registry
-- Knowledge graph across projects
-- Pit Crew cross-project review automation
+- [x] Parallel project mode — `lib/workspace-parallel.js`, capacity checks, pause/resume, `projects-in-flight`
+- [x] Pit Crew gate — blocked cross-project dependencies block `canAdvance` / `lockProject`
+- [x] Per-project cost governance — `lib/workspace-cost.js`, budget alerts, `budget` / `adjust-budget`, report `--cost-breakdown`
+- [x] Cross-project ADR registry — `lib/workspace-adr-registry.js`, `scan-adrs`, `adr-index`, `adr-impacts`, `audit-adr-awareness`
+- [x] Phase gate hook — ADR scan on architect (phase 3) approval
+- [x] Knowledge graph — `lib/workspace-knowledge-graph.js`, `knowledge-graph`, `query-graph`, GraphViz export
+- [x] Schema extensions — `max_concurrent_projects`, `cost_governance` on projects
+- [x] Tests — `tests/test-workspace-p2.test.js` (14 tests)
+
+## P2 — Remaining (future)
+
+| Item | Priority | Notes |
+|------|----------|-------|
+| Pit Crew automation hook in IDE | Low | Advisory roundtable trigger on blocked deps |
+| Full Neo4j-style graph queries | Low | MVP uses path-finding only |
+
+## P2 — Phase 4 (ADR-012) — superseded by Completed P2 above
+
+- ~~Parallel project mode with resource limits~~
+- ~~Cross-workspace cost governance / token aggregation~~
+- ~~Workspace ADR registry~~
+- ~~Knowledge graph across projects~~
+- Pit Crew cross-project review automation (partial — gate in `canAdvance`, full automation deferred)
 
 ## Verification checklist
 
 ```bash
 # Unit + integration
-npx vitest run tests/test-workspace-*.test.js tests/test-phase-gate-updater.test.js tests/test-hooks.test.js
+npx vitest run tests/test-workspace-*.test.js tests/test-headless-workspace.test.js tests/test-phase-gate-updater.test.js tests/test-hooks.test.js
+
+# Headless multi-project smoke (mock, no API)
+node bin/headless-runner.js --agent analyst --scenario multi-workspace --mock --dry-run
 
 # Manual smoke
 npx jumpstart-mode workspace status

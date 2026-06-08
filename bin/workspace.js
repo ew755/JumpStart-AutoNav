@@ -126,7 +126,162 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
     case 'report': {
       const formatArg = argv.find((arg) => arg.startsWith('--format='));
       const format = formatArg ? formatArg.split('=')[1] : 'markdown';
+      if (argv.includes('--cost-breakdown')) {
+        const summary = manager.costBreakdown();
+        console.log(require('../lib/workspace-cost').formatCostReport(summary));
+        break;
+      }
       manager.report(format);
+      break;
+    }
+    case 'projects-in-flight': {
+      const rows = manager.projectsInFlight();
+      console.log('\n🚀 Projects In Flight\n');
+      const active = rows.filter((r) => r.in_flight);
+      if (active.length === 0) {
+        console.log('  No projects currently locked.\n');
+      } else {
+        active.forEach((row) => {
+          const paused = row.paused ? ' (paused)' : '';
+          console.log(`  ▶ ${row.project_id} — locked by ${row.locked_by}${paused}`);
+        });
+        console.log();
+      }
+      break;
+    }
+    case 'pause':
+      try {
+        manager.pauseProject(subcommand);
+        console.log(`⏸️  Paused project: ${subcommand}`);
+      } catch (error) {
+        console.error(`❌ ${error.message}`);
+        process.exit(1);
+      return;
+      }
+      break;
+    case 'resume':
+      try {
+        manager.resumeProject(subcommand);
+        console.log(`▶️  Resumed project: ${subcommand}`);
+      } catch (error) {
+        console.error(`❌ ${error.message}`);
+        process.exit(1);
+      return;
+      }
+      break;
+    case 'can-advance': {
+      const targetId = subcommand || manager.config.active_project;
+      const result = manager.canAdvanceProject(targetId);
+      if (result.allowed) {
+        console.log(`✅ ${targetId} can advance`);
+      } else {
+        console.log(`❌ ${targetId} cannot advance: ${result.reason}`);
+        process.exit(1);
+      return;
+      }
+      break;
+    }
+    case 'budget': {
+      const projectArg = argv.find((arg) => arg.startsWith('--project='));
+      const projectId = projectArg ? projectArg.split('=')[1] : manager.config.active_project;
+      try {
+        const result = manager.checkBudget(projectId);
+        console.log(`\n💰 Budget: ${projectId}\n`);
+        console.log(`  Used: ${result.usage.toLocaleString()} / ${result.budget.toLocaleString()} (${result.percent_used.toFixed(1)}%)`);
+        result.alerts.forEach((a) => console.log(`  ${a.level === 'error' ? '❌' : '⚠️ '} ${a.message}`));
+        console.log();
+        if (!result.allowed) process.exit(1);
+      } catch (error) {
+        console.error(`❌ ${error.message}`);
+        process.exit(1);
+      return;
+      }
+      break;
+    }
+    case 'adjust-budget': {
+      const projectArg = argv.find((arg) => arg.startsWith('--project='));
+      const limitArg = argv.find((arg) => arg.startsWith('--new-limit='));
+      if (!projectArg || !limitArg) {
+        console.error('Usage: workspace adjust-budget --project=<id> --new-limit=<tokens>');
+        process.exit(1);
+      return;
+      }
+      const result = manager.adjustBudget(
+        projectArg.split('=')[1],
+        parseInt(limitArg.split('=')[1], 10)
+      );
+      if (!result.success) {
+        console.error(`❌ ${result.error}`);
+        process.exit(1);
+      return;
+      }
+      console.log(`✅ Updated ${result.project_id} budget to ${result.token_budget.toLocaleString()} tokens`);
+      break;
+    }
+    case 'adr-index': {
+      const registry = manager.adrIndex();
+      console.log('\n📋 Workspace ADR Index\n');
+      if (registry.adr_index.length === 0) {
+        console.log('  No ADRs registered. Run: workspace scan-adrs\n');
+      } else {
+        registry.adr_index.forEach((adr) => {
+          console.log(`  ${adr.id} [${adr.status}] ${adr.title} (${adr.project_id})`);
+        });
+        console.log();
+      }
+      break;
+    }
+    case 'scan-adrs': {
+      const result = manager.scanADRs();
+      console.log(`✅ Registered ${result.count} ADR(s) from project specs/decisions/`);
+      break;
+    }
+    case 'adr-impacts': {
+      const impacts = manager.adrImpacts(subcommand);
+      if (!impacts.found) {
+        console.error(`❌ ADR not found: ${subcommand}`);
+        process.exit(1);
+      return;
+      }
+      console.log(`\n🔗 Impacts of ${impacts.adr_id}: ${impacts.title}\n`);
+      if (impacts.affected_projects.length === 0) {
+        console.log('  No downstream projects impacted.\n');
+      } else {
+        impacts.affected_projects.forEach((id) => console.log(`  → ${id}`));
+        console.log();
+      }
+      break;
+    }
+    case 'audit-adr-awareness': {
+      const audit = manager.auditADRAwareness(subcommand);
+      console.log(`\n🔍 Upstream ADRs for ${audit.project_id}: ${audit.count}\n`);
+      audit.upstream_adrs.forEach((adr) => {
+        console.log(`  ${adr.id} [${adr.status}] from ${adr.source_project} — ${adr.title}`);
+      });
+      console.log();
+      break;
+    }
+    case 'knowledge-graph': {
+      const formatArg = argv.find((arg) => arg.startsWith('--format='));
+      const format = formatArg ? formatArg.split('=')[1] : 'json';
+      const output = manager.exportGraph(format);
+      if (format === 'graphviz') {
+        console.log(output);
+      } else {
+        console.log(JSON.stringify(output, null, 2));
+      }
+      break;
+    }
+    case 'query-graph': {
+      const queryParts = argv.slice(1).filter((a) => !a.startsWith('--'));
+      const queryString = queryParts.join(' ');
+      const result = manager.queryGraph(queryString);
+      if (result.error) {
+        console.error(`❌ ${result.error}`);
+        process.exit(1);
+      return;
+      }
+      console.log(JSON.stringify(result, null, 2));
       break;
     }
     case 'sync':
@@ -234,7 +389,19 @@ Commands:
   active              Show the currently active project
   set-active <id>     Switch to a different project
   validate-deps       Validate cross-project dependencies
-  report [--format]   Generate workspace report (markdown, json)
+  report [--format]   Generate workspace report (markdown, json, --cost-breakdown)
+  projects-in-flight Show projects with active agent locks
+  pause <id>          Pause a project (frees parallel capacity)
+  resume <id>         Resume a paused project
+  can-advance [id]    Check if project can advance (parallel/Pit Crew gates)
+  budget [--project=] Show per-project token budget status
+  adjust-budget       Update project token budget (--project=, --new-limit=)
+  scan-adrs           Scan all projects and register ADRs
+  adr-index           List cross-project ADR registry
+  adr-impacts <id>    Show projects impacted by an ADR
+  audit-adr-awareness <id>  List upstream ADRs affecting a project
+  knowledge-graph     Build/export graph (--format=json|graphviz)
+  query-graph <query> Query graph (downstream-of, blocks, impact-of)
   sync                Sync projects.json with state files (--audit, --pull, --push)
   create-project      Create a new project
   archive <id>        Archive a completed project
