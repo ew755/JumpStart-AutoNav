@@ -195,17 +195,62 @@ describe('approvePhase', () => {
   });
 
   it('infers phase 1 from product-brief.md path', () => {
-    // product-brief.md → inferPhaseFromSpec → 1
     const specPath = `${tmpDir}/projects/proj-test/specs/product-brief.md`;
     const phase = inferPhaseFromSpec(specPath);
     expect(phase).toBe(1);
   });
 
-  it('checkUnblocks returns empty array when no workspace-state.json present', () => {
-    const context = { mode: 'single-project' };
-    // checkUnblocks gracefully returns [] when workspace-state.json is not in cwd
-    const result = checkUnblocks(context, 'proj-a', 3);
-    expect(Array.isArray(result)).toBe(true);
+  it('writes project state when approving a spec in multi-project mode', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(tmpDir);
+      mkdirSync(join(tmpDir, '.jumpstart', 'state'), { recursive: true });
+      writeFileSync(
+        join(tmpDir, '.jumpstart', 'projects.json'),
+        JSON.stringify({
+          workspace: { id: 'ws-test' },
+          projects: [{
+            id: 'proj-test',
+            name: 'Test',
+            path: 'projects/proj-test',
+            status: 'phase-0',
+            phase: 0,
+          }],
+          active_project: 'proj-test',
+          settings: {},
+        }, null, 2)
+      );
+      mkdirSync(join(tmpDir, 'projects/proj-test/.jumpstart/state'), { recursive: true });
+      writeFileSync(join(tmpDir, 'projects/proj-test/.jumpstart/state/state.json'), '{}');
+
+      const context = {
+        mode: 'multi-project',
+        project: {
+          project_id: 'proj-test',
+          projectPath: join(tmpDir, 'projects/proj-test'),
+        },
+        config: {
+          specs_path: join(tmpDir, 'projects/proj-test/specs'),
+        },
+      };
+
+      const specPath = join(tmpDir, 'projects/proj-test/specs/challenger-brief.md');
+      mkdirSync(join(tmpDir, 'projects/proj-test/specs'), { recursive: true });
+      writeFileSync(specPath, '# Challenger Brief\n');
+
+      const result = approvePhase(context, specPath, 'Eric');
+      expect(result.success).toBe(true);
+      expect(result.phase).toBe(0);
+      expect(result.project_id).toBe('proj-test');
+
+      const state = JSON.parse(
+        readFileSync(join(tmpDir, 'projects/proj-test/.jumpstart/state/state.json'), 'utf8')
+      );
+      expect(state.current_phase).toBe(0);
+      expect(state.approved_by).toBe('Eric');
+    } finally {
+      process.chdir(originalCwd);
+    }
   });
 });
 

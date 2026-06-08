@@ -1,6 +1,6 @@
 # Workspace P0 Implementation Plan
 
-**Status:** In progress  
+**Status:** P0 complete, P1 in progress  
 **Updated:** 2026-06-06  
 **Target:** Operational multi-project agent workflows
 
@@ -18,18 +18,32 @@
 - [x] Tests: unblock flow, active pointer reconcile, workspace context hook
 - [x] README + tests/README workspace sections
 
-## P1 — Next sprint
+## Completed (P1)
+
+- [x] Pre-agent sync hook — `.github/hooks/workspace-sync-guard.js` (SessionStart drift warnings)
+- [x] `sync --push` backup — archives state to `.jumpstart/archive/workspace-sync/`; merges existing fields
+- [x] `validateSync` test suite — registry_ahead, state_ahead, missing_state
+- [x] CLI integration tests — `tests/test-workspace-cli.test.js`
+- [x] `approvePhase` end-to-end test — verifies state file writes
+- [x] `remove-project` command — `--confirm`, optional `--delete-files`
+
+## P1 — Remaining
 
 | Item | Priority | Notes |
 |------|----------|-------|
-| Pre-agent sync hook (ADR-010) | High | Block or warn when registry/state drift detected |
-| `sync --push` backup | High | Archive state before destructive push |
-| `validateSync` test suite | High | All three drift directions |
-| CLI integration tests | Medium | `bin/workspace.js` routing and exit codes |
-| `approvePhase` end-to-end test | Medium | Verify state file writes |
 | Headless runner multi-project | Medium | Scenario with `projects.json` |
-| `remove-project` command | Medium | Documented but missing |
 | Schema validation at write | Low | Validate `projects.json` against schema |
+
+## P1 — Next sprint (superseded — see Completed P1 above)
+
+| Item | Priority | Notes |
+|------|----------|-------|
+| ~~Pre-agent sync hook (ADR-010)~~ | ~~High~~ | Done |
+| ~~`sync --push` backup~~ | ~~High~~ | Done |
+| ~~`validateSync` test suite~~ | ~~High~~ | Done |
+| ~~CLI integration tests~~ | ~~Medium~~ | Done |
+| ~~`approvePhase` end-to-end test~~ | ~~Medium~~ | Done |
+| ~~`remove-project` command~~ | ~~Medium~~ | Done |
 
 ## P2 — Phase 4 (ADR-012)
 

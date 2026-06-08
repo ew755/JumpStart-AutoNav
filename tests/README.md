@@ -24,7 +24,7 @@ npm install
 Multi-project workspace capabilities have dedicated tests and fixtures:
 
 ```bash
-npx vitest run tests/test-workspace-context.test.js tests/test-workspace-manager.test.js tests/test-workspace-migration.test.js tests/test-workspace-integration.test.js tests/test-phase-gate-updater.test.js
+npx vitest run tests/test-workspace-context.test.js tests/test-workspace-manager.test.js tests/test-workspace-migration.test.js tests/test-workspace-integration.test.js tests/test-workspace-sync.test.js tests/test-workspace-cli.test.js tests/test-phase-gate-updater.test.js
 ```
 
 **Fixtures:** `fixtures/workspace/` — `single-project/`, `migrated-root/`, and `multi-project/` layouts. Regenerate with:

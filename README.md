@@ -946,6 +946,7 @@ npx jumpstart-mode workspace validate-deps
 
 # Detect drift between registry and per-project state
 npx jumpstart-mode workspace sync --audit
+npx jumpstart-mode workspace remove-project proj-old --confirm
 ```
 
 ### Layout

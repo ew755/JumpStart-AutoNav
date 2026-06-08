@@ -44,6 +44,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
     if (!result.success) {
       console.error(`❌ ${result.error}`);
       process.exit(1);
+      return;
     }
 
     if (result.alreadyMigrated) {
@@ -63,6 +64,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
     if (!init.initialized) {
       console.error('❌ Workspace not initialized. Run: jumpstart-mode workspace upgrade');
       process.exit(1);
+      return;
     }
     if (init.result && !init.result.alreadyMigrated) {
       console.log('ℹ️  Auto-initialized workspace from single-project mode\n');
@@ -70,6 +72,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
   } else if (command && command !== 'help' && detectMigrationState(rootDir) === 'single-project') {
     console.error('❌ Workspace not initialized. Run: jumpstart-mode workspace upgrade');
     process.exit(1);
+    return;
   }
 
   if (!command || command === 'help') {
@@ -83,6 +86,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
   } catch (error) {
     console.error(`❌ ${error.message}`);
     process.exit(1);
+    return;
   }
 
   switch (command) {
@@ -99,6 +103,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       } catch (error) {
         console.error(`❌ ${error.message}`);
         process.exit(1);
+      return;
       }
       break;
     case 'validate-deps': {
@@ -146,6 +151,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       } catch (error) {
         console.error(`❌ ${error.message}`);
         process.exit(1);
+      return;
       }
       break;
     case 'unarchive':
@@ -159,6 +165,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       } catch (error) {
         console.error(`❌ ${error.message}`);
         process.exit(1);
+      return;
       }
       break;
     case 'create-project': {
@@ -166,10 +173,31 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       if (!result.success) {
         console.error(`❌ ${result.error}`);
         process.exit(1);
+      return;
       }
       console.log(`✅ Project created: ${result.projectId}`);
       console.log(`   Path: ${result.projectPath}`);
       console.log(`   Next: jumpstart-mode workspace set-active ${result.projectId}`);
+      break;
+    }
+    case 'remove-project': {
+      const confirm = argv.includes('--confirm');
+      const deleteFiles = argv.includes('--delete-files');
+      const result = manager.removeProject(subcommand, { confirm, deleteFiles });
+      if (!result.success) {
+        console.error(`❌ ${result.error}`);
+        process.exit(1);
+      return;
+      }
+      console.log(`✅ Removed ${result.projectId} from registry`);
+      if (result.deletedPath) {
+        console.log(`   Deleted files: ${result.deletedPath}`);
+      } else {
+        console.log('   Project files on disk were kept (use --delete-files to remove)');
+      }
+      if (result.activeProject) {
+        console.log(`   Active project: ${result.activeProject}`);
+      }
       break;
     }
     default:
@@ -211,6 +239,7 @@ Commands:
   create-project      Create a new project
   archive <id>        Archive a completed project
   unarchive <id>      Restore an archived project
+  remove-project <id> Remove from registry (--confirm, optional --delete-files)
 
 Examples:
   jumpstart-mode workspace upgrade
