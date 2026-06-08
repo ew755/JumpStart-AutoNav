@@ -80,6 +80,8 @@
 - ~~Knowledge graph across projects~~
 - Pit Crew cross-project review automation (partial — gate in `canAdvance`, full automation deferred)
 
+- [x] Dogfood pass — `proj-workspace-pilot` Phase 0 seeded, `npm run dogfood:workspace`, CI test
+
 ## Verification checklist
 
 ```bash
@@ -90,6 +92,7 @@ npx vitest run tests/test-workspace-*.test.js tests/test-headless-workspace.test
 node bin/headless-runner.js --agent analyst --scenario multi-workspace --mock --dry-run
 
 # Manual smoke
+npm run dogfood:workspace
 npx jumpstart-mode workspace status
 npx jumpstart-mode workspace validate-deps
 npx jumpstart-mode workspace sync --audit

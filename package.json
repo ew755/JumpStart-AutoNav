@@ -52,6 +52,7 @@
     "emulate:mock": "node bin/headless-runner.js --mock",
     "emulate:architect": "node bin/headless-runner.js --agent architect --persona compliant-user",
     "emulate:full": "node bin/headless-runner.js --agent challenger,analyst,pm,architect",
+    "dogfood:workspace": "node scripts/dogfood-workspace-pilot.mjs",
     "prepublishOnly": "node bin/cli.js --help"
   },
   "dependencies": {

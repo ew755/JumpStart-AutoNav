@@ -22,8 +22,8 @@
       "id": "proj-workspace-pilot",
       "name": "Workspace Pilot",
       "path": "projects/proj-workspace-pilot",
-      "status": "initializing",
-      "phase": null,
+      "status": "phase-0",
+      "phase": 0,
       "type": "greenfield",
       "approver": "Eric",
       "locked": false,
@@ -31,7 +31,7 @@
       "config_path": "projects/proj-workspace-pilot/.jumpstart/config.yaml"
     }
   ],
-  "active_project": "proj-default",
+  "active_project": "proj-workspace-pilot",
   "settings": {
     "enforce_sequential_phases": true,
     "allow_parallel_projects": false,

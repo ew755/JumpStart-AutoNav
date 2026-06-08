@@ -128,7 +128,7 @@ tests/
 ├── test-workspace-validator.test.js       # projects.json schema validation
 ├── test-headless-workspace.test.js        # Headless multi-project scenario setup
 ├── test-workspace-p2.test.js              # P2: parallel, cost, ADR registry, knowledge graph
-├── test-workspace-path-resolver.test.js   # Headless specs path scoping
+├── test-dogfood-workspace-pilot.test.js   # Live pilot project dogfood checks
 ├── fixtures/
 │   ├── valid/                   # Conforming spec artifacts
 │   ├── invalid/                 # Intentionally broken artifacts

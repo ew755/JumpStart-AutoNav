@@ -1,31 +1,23 @@
-{
-  "project": {
-    "id": "proj-workspace-pilot",
-    "name": "Workspace Pilot",
-    "type": "greenfield",
-    "approver": "Eric",
-    "domain": null,
-    "description": null
-  },
-  "workflow": {
-    "enforce_sequential_phases": true,
-    "qa_log": true
-  },
-  "agents": {
-    "challenger": {
-      "enabled": true
-    },
-    "analyst": {
-      "enabled": true
-    },
-    "pm": {
-      "enabled": true
-    },
-    "architect": {
-      "enabled": true
-    },
-    "developer": {
-      "enabled": true
-    }
-  }
-}
+project:
+  id: proj-workspace-pilot
+  name: Workspace Pilot
+  type: greenfield
+  approver: Eric
+  domain: null
+  description: Live dogfood project for multi-project workspace validation
+
+workflow:
+  enforce_sequential_phases: true
+  qa_log: true
+
+agents:
+  challenger:
+    enabled: true
+  analyst:
+    enabled: true
+  pm:
+    enabled: true
+  architect:
+    enabled: true
+  developer:
+    enabled: true
