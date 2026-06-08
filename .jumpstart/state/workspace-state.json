@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "active_project_id": "proj-workspace-pilot",
   "workspace_resume_context": {
-    "tldr": "Pilot Phase 1 approved; ready for /jumpstart.plan",
+    "tldr": "Pilot Phase 2 approved; ready for /jumpstart.architect",
     "cross_project_dependencies": [
       {
         "from": "proj-workspace-pilot",
