@@ -17,6 +17,10 @@
       },
       {
         "type": "command",
+        "command": "node ${workspaceFolder}/.github/hooks/workspace-pitcrew-guard.js"
+      },
+      {
+        "type": "command",
         "command": "node ${workspaceFolder}/.github/hooks/phase-gate-status.js"
       },
       {

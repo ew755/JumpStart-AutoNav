@@ -24,7 +24,7 @@ npm install
 Multi-project workspace capabilities have dedicated tests and fixtures:
 
 ```bash
-npx vitest run tests/test-workspace-context.test.js tests/test-workspace-manager.test.js tests/test-workspace-migration.test.js tests/test-workspace-integration.test.js tests/test-workspace-sync.test.js tests/test-workspace-cli.test.js tests/test-workspace-validator.test.js tests/test-headless-workspace.test.js tests/test-workspace-p2.test.js tests/test-phase-gate-updater.test.js
+npx vitest run tests/test-workspace-context.test.js tests/test-workspace-manager.test.js tests/test-workspace-migration.test.js tests/test-workspace-integration.test.js tests/test-workspace-sync.test.js tests/test-workspace-cli.test.js tests/test-workspace-validator.test.js tests/test-headless-workspace.test.js tests/test-workspace-p2.test.js tests/test-workspace-path-resolver.test.js tests/test-phase-gate-updater.test.js
 ```
 
 **Fixtures:** `fixtures/workspace/` — `single-project/`, `migrated-root/`, and `multi-project/` layouts. Regenerate with:
@@ -128,6 +128,7 @@ tests/
 ├── test-workspace-validator.test.js       # projects.json schema validation
 ├── test-headless-workspace.test.js        # Headless multi-project scenario setup
 ├── test-workspace-p2.test.js              # P2: parallel, cost, ADR registry, knowledge graph
+├── test-workspace-path-resolver.test.js   # Headless specs path scoping
 ├── fixtures/
 │   ├── valid/                   # Conforming spec artifacts
 │   ├── invalid/                 # Intentionally broken artifacts

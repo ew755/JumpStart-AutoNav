@@ -1,6 +1,6 @@
 # ADR-012: Advanced Multi-Project Features
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-06-03  
 **Author:** Jump Start Framework  
 **Related:** ADR-009 (Multi-Workspace), ADR-010 (Sync), ADR-011 (Agent Integration)  

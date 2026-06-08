@@ -41,6 +41,7 @@ const common = require(path.join(HOOKS_DIR, 'lib', 'common.js'));
 const workspaceFingerprint = require(path.join(HOOKS_DIR, 'workspace-fingerprint.js'));
 const workspaceContextHook = require(path.join(HOOKS_DIR, 'workspace-context.js'));
 const workspaceSyncGuard = require(path.join(HOOKS_DIR, 'workspace-sync-guard.js'));
+const workspacePitcrewGuard = require(path.join(HOOKS_DIR, 'workspace-pitcrew-guard.js'));
 const phaseGateStatus = require(path.join(HOOKS_DIR, 'phase-gate-status.js'));
 const timelineWarmup = require(path.join(HOOKS_DIR, 'timeline-warmup.js'));
 const promptClassifier = require(path.join(HOOKS_DIR, 'prompt-classifier.js'));
@@ -282,6 +283,70 @@ describe('workspace-sync-guard hook', () => {
     const res = workspaceSyncGuard.handle({ sessionId: 's1' }, ctx(root));
     expect(res.stdout).toContain('drift');
     expect(res.stdout).toContain('sync --pull');
+  });
+});
+
+describe('workspace-pitcrew-guard hook', () => {
+  let root;
+  beforeEach(() => { root = makeSandbox(); });
+  afterEach(() => cleanup(root));
+
+  it('returns empty output when no blocked dependencies', () => {
+    fs.mkdirSync(path.join(root, '.jumpstart', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'projects.json'),
+      JSON.stringify({
+        workspace: { id: 'ws-test', enabled: true },
+        projects: [{ id: 'proj-a', name: 'A', path: '.', status: 'phase-0', config_path: '.jumpstart/config.yaml' }],
+        active_project: 'proj-a',
+        settings: { pit_crew_review_required: true },
+      })
+    );
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'state', 'workspace-state.json'),
+      JSON.stringify({ active_project_id: 'proj-a', workspace_resume_context: { cross_project_dependencies: [] } })
+    );
+
+    const res = workspacePitcrewGuard.handle({ sessionId: 's1' }, ctx(root));
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toBe('{}\n');
+  });
+
+  it('warns when active project has blocked cross-project dependencies', () => {
+    fs.mkdirSync(path.join(root, '.jumpstart', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'projects.json'),
+      JSON.stringify({
+        workspace: { id: 'ws-test', enabled: true },
+        projects: [
+          { id: 'proj-alpha', name: 'Alpha', path: 'projects/proj-alpha', status: 'phase-1', config_path: 'projects/proj-alpha/.jumpstart/config.yaml' },
+          { id: 'proj-beta', name: 'Beta', path: 'projects/proj-beta', status: 'phase-0', config_path: 'projects/proj-beta/.jumpstart/config.yaml' },
+        ],
+        active_project: 'proj-beta',
+        settings: { pit_crew_review_required: true },
+      })
+    );
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'state', 'workspace-state.json'),
+      JSON.stringify({
+        active_project_id: 'proj-beta',
+        workspace_resume_context: {
+          cross_project_dependencies: [{
+            from: 'proj-beta',
+            to: 'proj-alpha',
+            type: 'phase_dependency',
+            blocked: true,
+            unblock_condition: 'Phase 3',
+          }],
+        },
+      })
+    );
+
+    const res = workspacePitcrewGuard.handle({ sessionId: 's1' }, ctx(root));
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('Pit Crew Review Required');
+    expect(res.stdout).toContain('/jumpstart.pitcrew');
+    expect(res.stdout).toContain('proj-beta');
   });
 });
 
@@ -1281,12 +1346,12 @@ describe('session-analytics hook', () => {
 // ─── .github/hooks/autonav.json smoke test ──────────────────────────────────
 
 describe('.github/hooks/autonav.json', () => {
-  it('is valid JSON and registers all 25 hooks', () => {
+  it('is valid JSON and registers all 26 hooks', () => {
     const cfg = JSON.parse(
       fs.readFileSync(path.join(HOOKS_DIR, 'autonav.json'), 'utf8')
     );
     expect(cfg.hooks).toBeDefined();
-    expect(cfg.hooks.SessionStart).toHaveLength(6);
+    expect(cfg.hooks.SessionStart).toHaveLength(7);
     expect(cfg.hooks.UserPromptSubmit).toHaveLength(3);
     expect(cfg.hooks.PreCompact).toHaveLength(1);
     expect(cfg.hooks.PreToolUse).toHaveLength(10);
@@ -1297,7 +1362,7 @@ describe('.github/hooks/autonav.json', () => {
     for (const event of Object.keys(cfg.hooks)) {
       for (const hook of cfg.hooks[event]) commands.add(hook.command);
     }
-    expect(commands.size).toBe(25);
+    expect(commands.size).toBe(26);
   });
 
   it('every registered script file exists', () => {

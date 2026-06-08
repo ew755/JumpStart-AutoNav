@@ -285,6 +285,14 @@ class HeadlessRunner {
     
     // Copy base .jumpstart config
     this.copyJumpstartConfig();
+
+    if (!this.workspaceContext) {
+      const { getWorkspaceContext } = require('../lib/workspace-context');
+      const ctx = getWorkspaceContext(this.workspaceDir);
+      if (ctx.workspace) {
+        this.workspaceContext = ctx;
+      }
+    }
     
     this.log(`Workspace initialized: ${this.workspaceDir}`, 'success');
   }
@@ -381,6 +389,7 @@ class HeadlessRunner {
       tracer: this.tracer,
       dryRun: this.options.dryRun,
       timeline: this.timeline,
+      workspaceContext: this.workspaceContext,
       onUserProxyCall: this.options.mock 
         ? null  // Use default mock behavior
         : (args) => this.callUserProxy(args)

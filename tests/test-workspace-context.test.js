@@ -242,7 +242,7 @@ describe('loadProjectConfig', () => {
   it('returns config object with path and project metadata', () => {
     writeProjects(tmpDir, defaultProjectsJson('proj-a'));
     writeWorkspaceState(tmpDir, defaultWorkspaceState('proj-a'));
-    writeProjectConfig(tmpDir, 'proj-a', 'project:\n  name: proj-a\n  approver: Alice\n');
+    writeProjectConfig(tmpDir, 'proj-a', 'project:\n  name: Project A\n  approver: Alice\n');
     const project = loadActiveProject(tmpDir);
 
     const config = loadProjectConfig(project, tmpDir);
@@ -250,7 +250,9 @@ describe('loadProjectConfig', () => {
     expect(config.project_id).toBe('proj-a');
     expect(config.project_name).toBe('Project A');
     expect(config.project_approver).toBe('Alice');
-    expect(config.path).toContain('config.yaml');
+    expect(config.parsed).toBeDefined();
+    expect(config.parsed.project.name).toBe('Project A');
+    expect(config.workflow).toBeDefined();
   });
 });
 

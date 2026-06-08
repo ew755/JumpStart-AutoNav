@@ -61,8 +61,16 @@
 
 | Item | Priority | Notes |
 |------|----------|-------|
-| Pit Crew automation hook in IDE | Low | Advisory roundtable trigger on blocked deps |
 | Full Neo4j-style graph queries | Low | MVP uses path-finding only |
+| `workspace allocate-budget` | Low | Mentioned in ADR-012, not implemented |
+
+## Hardening (2026-06-08)
+
+- [x] Headless tool-bridge scoping — `lib/workspace-path-resolver.js` redirects root `specs/` writes
+- [x] `loadProjectConfig()` YAML parse — returns `parsed`, `workflow`, `agents`
+- [x] Pit Crew SessionStart hook — `.github/hooks/workspace-pitcrew-guard.js`
+- [x] Live registry cleanup — `proj-workspace-pilot` `created_at` normalized
+- [x] ADR-012 marked Accepted; `IMPLEMENTATION-COMPLETE.md` updated
 
 ## P2 — Phase 4 (ADR-012) — superseded by Completed P2 above
 
@@ -76,7 +84,7 @@
 
 ```bash
 # Unit + integration
-npx vitest run tests/test-workspace-*.test.js tests/test-headless-workspace.test.js tests/test-phase-gate-updater.test.js tests/test-hooks.test.js
+npx vitest run tests/test-workspace-*.test.js tests/test-headless-workspace.test.js tests/test-workspace-path-resolver.test.js tests/test-phase-gate-updater.test.js tests/test-hooks.test.js
 
 # Headless multi-project smoke (mock, no API)
 node bin/headless-runner.js --agent analyst --scenario multi-workspace --mock --dry-run

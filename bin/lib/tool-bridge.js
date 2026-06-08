@@ -22,7 +22,24 @@ const path = require('path');
  * @returns {object} Bridge with .execute(), .getTodoState(), .getCallHistory()
  */
 function createToolBridge(options = {}) {
-  const { workspaceDir, tracer = null, dryRun = false, onUserProxyCall = null, timeline = null } = options;
+  const {
+    workspaceDir,
+    tracer = null,
+    dryRun = false,
+    onUserProxyCall = null,
+    timeline = null,
+    workspaceContext = null,
+    pathResolver = null,
+  } = options;
+
+  let resolver = pathResolver;
+  if (!resolver && workspaceContext) {
+    const { createWorkspacePathResolver } = require('../../lib/workspace-path-resolver');
+    resolver = createWorkspacePathResolver(workspaceDir, workspaceContext);
+  }
+  const resolvePath = resolver?.resolvePath || ((p) => p);
+  const usageLogPath = resolver?.usageLogPath || path.join(workspaceDir, '.jumpstart', 'usage-log.json');
+  const specsRel = resolver?.specsRel || 'specs';
 
   const callHistory = [];
   let todoState = [];
@@ -32,10 +49,11 @@ function createToolBridge(options = {}) {
   const handlers = {
     async read_file(args) {
       const { filePath, startLine = 1, endLine } = args;
-      if (!fs.existsSync(filePath)) {
-        return { error: `File not found: ${filePath}` };
+      const resolvedPath = resolvePath(filePath);
+      if (!fs.existsSync(resolvedPath)) {
+        return { error: `File not found: ${resolvedPath}`, requested_path: filePath };
       }
-      const raw = fs.readFileSync(filePath, 'utf8');
+      const raw = fs.readFileSync(resolvedPath, 'utf8');
       const lines = raw.split('\n');
       const totalLines = lines.length;
       const end = endLine != null ? Math.min(endLine, totalLines) : totalLines;
@@ -45,15 +63,16 @@ function createToolBridge(options = {}) {
 
     async create_file(args) {
       const { filePath, content } = args;
+      const resolvedPath = resolvePath(filePath);
       if (dryRun) {
-        return { success: true, dryRun: true, filePath };
+        return { success: true, dryRun: true, filePath: resolvedPath, requested_path: filePath };
       }
-      const dir = path.dirname(filePath);
+      const dir = path.dirname(resolvedPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      fs.writeFileSync(filePath, content, 'utf8');
-      return { success: true, filePath };
+      fs.writeFileSync(resolvedPath, content, 'utf8');
+      return { success: true, filePath: resolvedPath, requested_path: filePath, redirected: resolvedPath !== filePath };
     },
 
     async list_dir(args) {
@@ -71,19 +90,20 @@ function createToolBridge(options = {}) {
 
     async replace_string_in_file(args) {
       const { filePath, oldString, newString } = args;
-      if (!fs.existsSync(filePath)) {
-        return { error: `File not found: ${filePath}` };
+      const resolvedPath = resolvePath(filePath);
+      if (!fs.existsSync(resolvedPath)) {
+        return { error: `File not found: ${resolvedPath}`, requested_path: filePath };
       }
       if (dryRun) {
         return { success: true, dryRun: true };
       }
-      let content = fs.readFileSync(filePath, 'utf8');
+      let content = fs.readFileSync(resolvedPath, 'utf8');
       if (!content.includes(oldString)) {
         return { error: 'oldString not found in file' };
       }
       content = content.replace(oldString, newString);
-      fs.writeFileSync(filePath, content, 'utf8');
-      return { success: true };
+      fs.writeFileSync(resolvedPath, content, 'utf8');
+      return { success: true, filePath: resolvedPath, redirected: resolvedPath !== filePath };
     },
 
     async file_search(args) {
@@ -261,7 +281,7 @@ function createToolBridge(options = {}) {
     async log_usage(args) {
       try {
         const { logUsage } = await import('./usage.js');
-        const logPath = path.join(workspaceDir, '.jumpstart', 'usage-log.json');
+        const logPath = usageLogPath;
         const entry = {
           phase: args.phase || 'unknown',
           agent: args.agent || 'unknown',
@@ -315,7 +335,7 @@ function createToolBridge(options = {}) {
     async run_crossref(args) {
       try {
         const { validateCrossRefs } = await import('./crossref.js');
-        return validateCrossRefs(args.specs_dir || 'specs', args.root || workspaceDir);
+        return validateCrossRefs(args.specs_dir || specsRel, args.root || workspaceDir);
       } catch (err) {
         return { success: false, error: err.message };
       }
