@@ -36,6 +36,12 @@ const { createToolBridge } = require('./lib/tool-bridge');
 const { getToolsForPhase } = require('./lib/tool-schemas');
 const { createMockRegistry, createPersonaRegistry } = require('./lib/mock-responses');
 const { SimulationTracer } = require('./lib/simulation-tracer');
+const {
+  isMultiWorkspaceScenario,
+  setupMultiWorkspaceScenario,
+  copyPhaseArtifacts,
+  getWorkspacePromptSuffix,
+} = require('../lib/headless-workspace');
 
 // Usage & timeline logging (ESM — loaded dynamically)
 let _usageMod = null;
@@ -161,6 +167,9 @@ ${chalk.bold('Examples:')}
   # Run with scenario fixtures
   node bin/headless-runner.js --agent architect --scenario ecommerce
 
+  # Run against a multi-project workspace scenario
+  node bin/headless-runner.js --agent analyst --scenario multi-workspace --mock
+
 ${chalk.bold('Available Models:')}
   ${listModels().join('\n  ')}
 
@@ -188,6 +197,7 @@ class HeadlessRunner {
     
     // Usage log path
     this.usageLogPath = path.join(this.workspaceDir, '.jumpstart', 'usage-log.json');
+    this.workspaceContext = null;
     
     // Initialize timeline for event recording
     this.timeline = null;
@@ -280,7 +290,17 @@ class HeadlessRunner {
   }
   
   copyScenarioFixtures(scenarioDir) {
-    // Copy scenario config
+    if (isMultiWorkspaceScenario(scenarioDir)) {
+      this.workspaceContext = setupMultiWorkspaceScenario(scenarioDir, this.workspaceDir);
+      copyPhaseArtifacts(scenarioDir, this.workspaceDir);
+      this.log(
+        `Multi-project workspace: active=${this.workspaceContext.project?.project_id}, specs=${this.workspaceContext.config?.specs_path}`,
+        'info'
+      );
+      return;
+    }
+
+    // Single-project scenario: copy config and root specs/
     const configFile = path.join(scenarioDir, 'config.yaml');
     if (fs.existsSync(configFile)) {
       fs.copyFileSync(configFile, path.join(this.workspaceDir, '.jumpstart', 'config.yaml'));
@@ -373,8 +393,12 @@ class HeadlessRunner {
     if (!fs.existsSync(agentFile)) {
       throw new Error(`Agent file not found: ${agentFile}`);
     }
-    
-    return fs.readFileSync(agentFile, 'utf8');
+
+    let prompt = fs.readFileSync(agentFile, 'utf8');
+    if (this.workspaceContext?.workspace) {
+      prompt += getWorkspacePromptSuffix(this.workspaceDir);
+    }
+    return prompt;
   }
   
   loadPersonaPrompt() {

@@ -1,0 +1,5 @@
+{
+  "fixture": "multi-project",
+  "active_project": "proj-alpha",
+  "description": "Two-project workspace; active project is proj-alpha for headless runs"
+}

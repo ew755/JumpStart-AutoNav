@@ -33,6 +33,7 @@ scenarios/{scenario-name}/
 
 - `ecommerce/` - E-commerce platform scenario with full phase coverage
 - `baseline/` - Minimal baseline scenario for quick testing
+- `multi-workspace/` - Multi-project workspace scenario (uses `workspace-fixture.json` + shared fixture)
 
 ## Creating New Scenarios
 
