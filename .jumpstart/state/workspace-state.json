@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "active_project_id": "proj-default",
   "workspace_resume_context": {
-    "tldr": "proj-default Phase 1 approved; workspace-first MVP scoped; next PRD",
+    "tldr": "proj-default Phase 2 approved; next architecture (unblocks pilot at Phase 3)",
     "cross_project_dependencies": [
       {
         "from": "proj-workspace-pilot",
