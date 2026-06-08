@@ -80,7 +80,16 @@
 - ~~Knowledge graph across projects~~
 - Pit Crew cross-project review automation (partial — gate in `canAdvance`, full automation deferred)
 
-- [x] Dogfood pass — `proj-workspace-pilot` Phase 0 seeded, `npm run dogfood:workspace`, CI test
+- [x] Dogfood pass — `proj-workspace-pilot` Phase 0–4 complete, `npm run dogfood:workspace`, CI test
+- [x] Pilot validation program — Pit Crew resume writer, mock analyst headless completion (E3-S2, E4-S1)
+- [x] Dogfood non-destructive redirect probe — uses `dogfood-redirect-probe.md`, preserves approved artifacts
+
+## Next track
+
+| Item | Owner | Notes |
+|------|-------|-------|
+| `proj-default` Phase 0→3 | Eric | AutoNav product at repo root; unblocks pilot Pit Crew dependency when Phase 3 approved |
+| Release notes | Morgan | Document workspace P0–P2 + pilot dogfood as validation evidence |
 
 ## Verification checklist
 

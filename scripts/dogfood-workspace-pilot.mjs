@@ -7,7 +7,7 @@
  */
 
 import { createRequire } from 'module';
-import { existsSync, readFileSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync, mkdirSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { spawnSync } from 'child_process';
 
@@ -18,10 +18,9 @@ const { getWorkspaceContext } = require('../lib/workspace-context.js');
 const { WorkspaceManager } = require('../lib/workspace-manager.js');
 const { createToolBridge } = require('../bin/lib/tool-bridge.js');
 const { buildPitCrewBlock } = require('../.github/hooks/workspace-pitcrew-guard.js');
-const { loadSpec } = require('../lib/spec-loader.js');
+const { loadSpec, validatePhaseGate } = require('../lib/spec-loader.js');
 
 const PILOT_SPECS = join(root, 'projects', 'proj-workspace-pilot', 'specs');
-const ROOT_SPECS = join(root, 'specs');
 
 function step(name, fn) {
   process.stdout.write(`\n▶ ${name}... `);
@@ -74,6 +73,14 @@ step('canAdvance blocked by Pit Crew (expected)', () => {
   assert(result.pitCrewReview === true, 'expected pitCrewReview flag');
 });
 
+step('Approved product brief still valid (not clobbered)', () => {
+  const context = getWorkspaceContext(root);
+  const spec = loadSpec(context, 'product-brief.md');
+  const gate = validatePhaseGate(spec);
+  assert(gate.valid, `product-brief gate invalid: ${gate.errors?.join(', ') || 'unknown'}`);
+  assert(spec.content.includes('Approved by:** Eric'), 'approved product brief was overwritten');
+});
+
 step('Tool bridge redirects specs write to pilot project', async () => {
   const context = getWorkspaceContext(root);
   const bridge = createToolBridge({
@@ -81,41 +88,22 @@ step('Tool bridge redirects specs write to pilot project', async () => {
     workspaceContext: context,
   });
 
-  const productBriefPath = join(root, 'specs', 'product-brief.md');
+  // Use throwaway probe file — never overwrite approved phase artifacts
+  const probeName = 'dogfood-redirect-probe.md';
+  const probeRootPath = join(root, 'specs', probeName);
+  const probePilotPath = join(PILOT_SPECS, probeName);
+
+  if (existsSync(probePilotPath)) {
+    unlinkSync(probePilotPath);
+  }
+
   const toolCall = {
     id: 'dogfood-1',
     function: {
       name: 'create_file',
       arguments: JSON.stringify({
-        filePath: productBriefPath,
-        content: [
-          '---',
-          'id: product-brief-workspace-pilot',
-          'phase: 1',
-          'agent: Analyst',
-          'status: Draft',
-          'created: 2026-06-08',
-          '---',
-          '',
-          '# Product Brief — Workspace Pilot',
-          '',
-          '## Problem Reference',
-          '',
-          '> Validate multi-project workspace Phase 0→1 on live pilot project.',
-          '',
-          '## Vision Statement',
-          '',
-          '> Teams run nested Jump Start projects with correct artifact scoping and cross-project gates.',
-          '',
-          '## Phase Gate Approval',
-          '',
-          '- [ ] Personas defined',
-          '- [ ] MVP scope documented',
-          '',
-          '**Approved by:** Pending',
-          '**Approval date:** Pending',
-          '',
-        ].join('\n'),
+        filePath: probeRootPath,
+        content: '# Dogfood redirect probe\n\nTemporary file for path redirection test.\n',
       }),
     },
   };
@@ -124,9 +112,10 @@ step('Tool bridge redirects specs write to pilot project', async () => {
   assert(response.success, response.error || 'create_file failed');
   assert(response.redirected === true, 'expected path redirection');
 
-  const pilotBrief = join(PILOT_SPECS, 'product-brief.md');
-  assert(existsSync(pilotBrief), `pilot product brief missing: ${pilotBrief}`);
-  assert(!existsSync(join(ROOT_SPECS, 'product-brief.md')), 'root specs should not receive product-brief');
+  assert(existsSync(probePilotPath), `pilot probe missing: ${probePilotPath}`);
+  assert(!existsSync(probeRootPath), 'root specs should not receive probe file');
+
+  unlinkSync(probePilotPath);
 });
 
 step('workspace sync --audit (CLI)', () => {
@@ -157,7 +146,5 @@ step('Headless multi-workspace scenario (mock analyst setup)', () => {
 });
 
 console.log('\n✅ Dogfood pass complete.');
-console.log('\nNext steps:');
-console.log('  1. Review projects/proj-workspace-pilot/specs/product-brief.md');
-console.log('  2. Run /jumpstart.analyze or approve Phase 1 when ready');
-console.log('  3. Run /jumpstart.pitcrew before advancing while dependency is blocked');
+console.log('\nPilot status: Phase 0–4 complete (proj-workspace-pilot).');
+console.log('Optional next: set-active proj-default for AutoNav product track.');
