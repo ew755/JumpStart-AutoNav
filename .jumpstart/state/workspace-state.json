@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "active_project_id": "proj-workspace-pilot",
+  "active_project_id": "proj-default",
   "workspace_resume_context": {
-    "tldr": "Workspace Pilot validation complete (Phase 0-4); dogfood + Pit Crew outcome recorded",
+    "tldr": "proj-default Phase 0 approved; ready for /jumpstart.analyze",
     "cross_project_dependencies": [
       {
         "from": "proj-workspace-pilot",

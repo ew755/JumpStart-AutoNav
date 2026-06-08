@@ -6,11 +6,11 @@
 # ============================================================================
 
 project:
-  name: ""                              # Your project name (populated by `jumpstart init`)
-  description: ""                       # One-line project description
-  created_at: ""                        # ISO date, auto-populated
-  approver: ""                          # Name or team name for phase gate approvals (set during initial setup)
-  type: null                            # greenfield | brownfield (null = not yet determined)
+  name: "JumpStart AutoNav"
+  description: "Spec-driven agentic coding framework with multi-project workspace, hooks, and headless agent emulation"
+  created_at: "2026-06-03"
+  approver: "Eric"
+  type: brownfield
                                         #   greenfield: New project built from scratch
                                         #   brownfield: Existing codebase being extended or refactored
                                         #   Detected by CLI at install time, confirmed by Challenger at Phase 0

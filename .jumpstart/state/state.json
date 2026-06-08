@@ -1,13 +1,38 @@
 {
   "version": "1.0.0",
-  "description": "Workflow state persistence for Jump Start framework.",
-  "current_phase": null,
-  "current_agent": null,
-  "current_step": null,
-  "last_completed_step": null,
-  "active_artifacts": [],
-  "approved_artifacts": [],
-  "phase_history": [],
-  "resume_context": null,
-  "last_updated": null
+  "current_phase": 0,
+  "last_completed_step": "Phase 0 Challenge Approved",
+  "last_phase_approved": "2026-06-08",
+  "approved_by": "Eric",
+  "approved_artifacts": [
+    {
+      "artifact": "codebase-context.md",
+      "phase": 0,
+      "approved_by": "Eric",
+      "approval_date": "2026-06-08",
+      "note": "Scout pre-phase (brownfield)"
+    },
+    {
+      "artifact": "challenger-brief.md",
+      "phase": 0,
+      "approved_by": "Eric",
+      "approval_date": "2026-06-08"
+    }
+  ],
+  "resume_context": {
+    "tldr": "Phase 0 approved; ready for Analyst (Phase 1) on JumpStart AutoNav",
+    "last_action": "Challenger brief + codebase context approved by Eric",
+    "next_action": "Run /jumpstart.analyze for product brief",
+    "next_command": "/jumpstart.analyze",
+    "open_questions": [
+      "MVP scope: workspace release vs full AutoNav hooks/headless polish"
+    ],
+    "key_insights": [
+      "Brownfield — extend existing lib/hooks, no rewrite",
+      "Phase 3 root architecture unblocks pilot Pit Crew dependency"
+    ],
+    "last_agent": "Challenger",
+    "last_phase": 0,
+    "last_step": "Phase 0 gate approved"
+  }
 }
