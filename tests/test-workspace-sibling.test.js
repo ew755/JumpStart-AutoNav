@@ -127,13 +127,13 @@ describe('WorkspaceManager.linkSiblingProject', () => {
     });
 
     const manager = new WorkspaceManager(hub);
-    const result = manager.linkSiblingProject([
-      '--id=proj-frontend',
-      '--name=Frontend',
-      '--path=../frontend',
-      '--init',
-      '--set-active',
-    ]);
+    const result = manager.linkSiblingProject({
+      id: 'proj-frontend',
+      name: 'Frontend',
+      path: '../frontend',
+      init: true,
+      setActive: true,
+    });
 
     expect(result.success).toBe(true);
     expect(result.external).toBe(true);
@@ -168,11 +168,11 @@ describe('WorkspaceManager.linkSiblingProject', () => {
     });
 
     const manager = new WorkspaceManager(hub);
-    const result = manager.linkSiblingProject([
-      '--id=proj-missing',
-      '--name=Missing',
-      '--path=../does-not-exist',
-    ]);
+    const result = manager.linkSiblingProject({
+      id: 'proj-missing',
+      name: 'Missing',
+      path: '../does-not-exist',
+    });
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/not found/i);
   });

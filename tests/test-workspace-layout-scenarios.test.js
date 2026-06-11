@@ -354,12 +354,12 @@ describe('multi-repo program CLI (Scenario B companion)', () => {
     });
 
     const manager = new WorkspaceManager(hubRoot);
-    const linked = manager.linkSiblingProject([
-      '--id=proj-api',
-      '--name=API Service',
-      '--path=../api-repo',
-      '--init',
-    ]);
+    const linked = manager.linkSiblingProject({
+      id: 'proj-api',
+      name: 'API Service',
+      path: '../api-repo',
+      init: true,
+    });
     expect(linked.success).toBe(true);
     expect(linked.projectPath).toBe('../api-repo');
     expect(existsSync(join(siblingRoot, 'specs'))).toBe(true);

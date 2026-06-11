@@ -74,7 +74,6 @@ describe('WorkspaceManager', () => {
     it('switches active project', () => {
       manager.setActive('proj-b');
       expect(manager.config.active_project).toBe('proj-b');
-      expect(manager.state.active_project_id).toBe('proj-b');
     });
 
     it('throws when switching to non-existent project', () => {
@@ -156,6 +155,71 @@ describe('WorkspaceManager', () => {
 
       expect(manager.isProjectLocked('proj-a')).toBe(true);
       expect(manager.isProjectLocked('proj-b')).toBe(true);
+    });
+
+    it('treats locks past their TTL as free (zombie lock prevention)', () => {
+      const twoHoursAgo = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
+      manager.state.project_locks['proj-a'] = {
+        locked_by: 'Architect',
+        locked_at: twoHoursAgo,
+        ttl_seconds: 3600,
+      };
+
+      expect(manager.isProjectLocked('proj-a')).toBe(false);
+      // Expired lock must not count against sequential-mode capacity.
+      const result = manager.canAdvanceProject('proj-a');
+      expect(result.allowed).toBe(true);
+    });
+
+    it('applies the default 1-hour TTL when none is set on the lock', () => {
+      const twoHoursAgo = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
+      const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+      manager.state.project_locks['proj-a'] = {
+        locked_by: 'Architect',
+        locked_at: twoHoursAgo,
+      };
+      manager.state.project_locks['proj-b'] = {
+        locked_by: 'Developer',
+        locked_at: oneMinuteAgo,
+      };
+
+      expect(manager.isProjectLocked('proj-a')).toBe(false);
+      expect(manager.isProjectLocked('proj-b')).toBe(true);
+    });
+
+    it('reports expired locks in projects-in-flight rows', () => {
+      const twoHoursAgo = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
+      manager.state.project_locks['proj-a'] = {
+        locked_by: 'Architect',
+        locked_at: twoHoursAgo,
+        ttl_seconds: 3600,
+      };
+
+      const rows = manager.projectsInFlight();
+      const projA = rows.find((row) => row.project_id === 'proj-a');
+      expect(projA.in_flight).toBe(false);
+      expect(projA.locked_by).toBe(null);
+      expect(projA.lock_expired).toBe(true);
+    });
+  });
+
+  describe('Workspace Settings', () => {
+    it('updates known settings via configureSettings', () => {
+      const result = manager.configureSettings({
+        allow_parallel_projects: true,
+        max_concurrent_projects: 2,
+      });
+      expect(result.success).toBe(true);
+
+      const reloaded = new WorkspaceManager(tmpDir);
+      expect(reloaded.config.settings.allow_parallel_projects).toBe(true);
+      expect(reloaded.config.settings.max_concurrent_projects).toBe(2);
+    });
+
+    it('rejects unknown settings', () => {
+      const result = manager.configureSettings({ not_a_setting: true });
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/Unknown setting/);
     });
   });
 

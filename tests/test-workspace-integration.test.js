@@ -137,7 +137,6 @@ describe('WorkspaceManager integration', () => {
 
     manager.setActive('proj-beta');
     expect(manager.config.active_project).toBe('proj-beta');
-    expect(manager.state.active_project_id).toBe('proj-beta');
 
     const context = getWorkspaceContext(tmpDir);
     expect(context.project.project_id).toBe('proj-beta');
@@ -156,12 +155,12 @@ describe('WorkspaceManager integration', () => {
     copyFixture('migrated-root', tmpDir);
 
     const manager = new WorkspaceManager(tmpDir);
-    const result = manager.createProject([
-      '--id=proj-sidecar',
-      '--name=Sidecar Service',
-      '--type=greenfield',
-      '--approver=Casey',
-    ]);
+    const result = manager.createProject({
+      id: 'proj-sidecar',
+      name: 'Sidecar Service',
+      type: 'greenfield',
+      approver: 'Casey',
+    });
 
     expect(result.success).toBe(true);
     expect(existsSync(join(tmpDir, 'projects', 'proj-sidecar', 'specs'))).toBe(true);

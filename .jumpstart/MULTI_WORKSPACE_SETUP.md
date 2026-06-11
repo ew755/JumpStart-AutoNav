@@ -306,10 +306,12 @@ jumpstart-mode workspace validate-deps
 When two projects have dependencies, invoke Pit Crew before approving:
 
 ```bash
-# During Phase 3 (Architect) for proj-copilot-ui:
-jumpstart-mode workspace pit-crew \
-  --review-type cross-project-dependency \
-  --projects proj-token-usage,proj-copilot-ui
+# During Phase 3 (Architect) for proj-copilot-ui, record the review outcome:
+jumpstart-mode workspace pitcrew-record \
+  --topic="Cross-project dependency review" \
+  --outcome="Approved" \
+  --from=proj-copilot-ui \
+  --to=proj-token-usage
 ```
 
 **Pit Crew reviews:**
@@ -425,8 +427,8 @@ jumpstart-mode workspace set-active proj-a
 # Team B works on proj-b in parallel
 jumpstart-mode workspace set-active proj-b
 
-# Before integrating, invoke Pit Crew:
-jumpstart-mode workspace pit-crew --review-type cross-project-dependency ...
+# Before integrating, record the Pit Crew review:
+jumpstart-mode workspace pitcrew-record --topic="Integration review" --outcome="Approved"
 ```
 
 ### Workflow 3: Shared Agent Personas / Skills

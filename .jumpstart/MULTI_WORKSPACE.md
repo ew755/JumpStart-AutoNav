@@ -100,7 +100,6 @@ Workspace (root)
 ```json
 {
   "version": "1.0.0",
-  "active_project_id": "proj-token-usage",
   "workspace_resume_context": {
     "tldr": "Two projects running in parallel: Token Usage at Phase 2, Copilot Dashboard at Phase 0",
     "cross_project_dependencies": [
@@ -119,8 +118,7 @@ Workspace (root)
     "proj-token-usage": {
       "locked_by": "Architect",
       "locked_at": "2026-06-03T14:15:00Z",
-      "lock_ttl_seconds": 3600,
-      "reason": "Phase 3: Architecture review in progress"
+      "ttl_seconds": 3600
     }
   },
   "last_updated": "2026-06-03T14:22:00Z"
@@ -138,6 +136,11 @@ jumpstart-mode workspace active
 
 # Switch active project
 jumpstart-mode workspace set-active proj-copilot-dashboard
+
+# Detect project from file path (auto-switch when unambiguous)
+jumpstart-mode workspace detect specs/prd.md
+jumpstart-mode workspace detect projects/pilot/specs/prd.md --auto
+jumpstart-mode workspace detect specs/prd.md --project-id=proj-default
 
 # Validate cross-project dependencies (structural errors fail; blocked deps show ⚠️ BLOCKED + unblock condition)
 jumpstart-mode workspace validate-deps
@@ -164,10 +167,12 @@ jumpstart-mode workspace create-project \
 # Remove a project (soft-delete)
 jumpstart-mode workspace remove-project proj-legacy-build
 
-# Invoke Pit Crew for cross-project review
-jumpstart-mode workspace pit-crew \
-  --review-type cross-project-dependency \
-  --projects proj-token-usage,proj-copilot-dashboard
+# Record a Pit Crew cross-project review outcome
+jumpstart-mode workspace pitcrew-record \
+  --topic="Cross-project dependency review" \
+  --outcome="Approved" \
+  --from=proj-copilot-dashboard \
+  --to=proj-token-usage
 ```
 
 ## Migration Path
@@ -274,6 +279,7 @@ npx jumpstart-mode workspace status          # 🔗 marks external paths
 | `create-project` | ✅ scaffolds under hub | ❌ use `link-sibling` |
 | `link-sibling` | ❌ | ✅ registers existing checkout |
 | `set-active` / spec load / approve | ✅ | ✅ (run from hub) |
+| `detect <path> [--auto]` | ✅ path-based active switch | ✅ sibling cwd resolves via hub-link |
 | Copilot hooks | ✅ when hub is workspace root | ⚠️ open hub, not child repo alone |
 
 **Spec ownership:** `lib/workspace-project-paths.js` resolves which project owns a spec path (registry-aware), so `approve` and sync work for sibling paths—not only `projects/{id}/`.
@@ -308,6 +314,7 @@ Workspace release documents **four governance surfaces** (Must Have). The full 2
 |---------|---------------|------|
 | Pit Crew guard | `.github/hooks/workspace-pitcrew-guard.js` | SessionStart — inject cross-project blockers when Pit Crew review is required |
 | Workspace context | `.github/hooks/workspace-context.js` (+ `lib/workspace-context.js`) | SessionStart — active project, spec paths, upstream gates |
+| Active project guard | `.github/hooks/workspace-active-guard.js` (+ `lib/workspace-detect.js`) | PreToolUse — auto-switch on unambiguous path; block on ambiguity |
 | Phase boundary | `.github/hooks/phase-boundary-guard.js` | Block implementation when upstream specs are missing or unapproved |
 | Spec redirect | `lib/workspace-path-resolver.js` + `bin/lib/tool-bridge.js` | Route spec reads/writes to the active project's `specs/` tree |
 
@@ -369,22 +376,24 @@ Workspace release documents **four governance surfaces** (Must Have). The full 2
 
 ### Project Lock Mechanism
 
-```
-.jumpstart/state/project-locks/
-├── proj-a.lock
-│   {
-│     "locked_by": "Architect",
-│     "started": "2026-06-03T14:22:00Z",
-│     "ttl": 3600,
-│     "reason": "Phase 3 architecture review"
-│   }
-└── proj-b.lock (free)
+Locks live in `.jumpstart/state/workspace-state.json` under `project_locks`:
+
+```json
+{
+  "project_locks": {
+    "proj-a": {
+      "locked_by": "Architect",
+      "locked_at": "2026-06-03T14:22:00Z",
+      "ttl_seconds": 3600
+    }
+  }
+}
 ```
 
 **Rules:**
 - If `allow_parallel_projects: false` → Only active project can hold locks
 - If `allow_parallel_projects: true` → Multiple projects can run, but Pit Crew mediates conflicts
-- Lock TTL: Default 1 hour (prevents zombie locks)
+- Lock TTL: Default 1 hour (`ttl_seconds: 3600`). Locks past their TTL are treated as free, so a crashed agent session cannot leave a zombie lock. `workspace projects-in-flight` reports expired locks via `lock_expired`.
 
 ## Limitations & Constraints
 

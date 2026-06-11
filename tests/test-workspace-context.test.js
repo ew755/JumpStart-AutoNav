@@ -121,11 +121,12 @@ describe('detectWorkspaceMode', () => {
 // ── loadActiveProject ────────────────────────────────────────────────────────
 
 describe('loadActiveProject', () => {
-  it('returns null when workspace-state.json is missing', () => {
+  it('resolves from registry alone when workspace-state.json is missing', () => {
     writeProjects(tmpDir, defaultProjectsJson());
-    // No workspace-state.json
+    // No workspace-state.json — registry is the single source of truth.
     const result = loadActiveProject(tmpDir);
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result.project_id).toBe('proj-a');
   });
 
   it('returns null when projects.json is missing', () => {
@@ -154,7 +155,7 @@ describe('loadActiveProject', () => {
     expect(result.project_id).toBe('proj-a');
   });
 
-  it('reconciles active_project_id when registry and state diverge', () => {
+  it('uses the registry as single source of truth when legacy state diverges', () => {
     writeProjects(tmpDir, {
       ...defaultProjectsJson('proj-b'),
       active_project: 'proj-b',
@@ -182,10 +183,11 @@ describe('loadActiveProject', () => {
     const result = loadActiveProject(tmpDir);
     expect(result.project_id).toBe('proj-b');
 
-    const updatedState = JSON.parse(
+    // Registry wins; loading must not rewrite workspace-state.json.
+    const stateOnDisk = JSON.parse(
       readFileSync(join(tmpDir, '.jumpstart', 'state', 'workspace-state.json'), 'utf8')
     );
-    expect(updatedState.active_project_id).toBe('proj-b');
+    expect(stateOnDisk).toEqual(defaultWorkspaceState('proj-a'));
   });
 
   it('includes derived projectPath in returned object', () => {
@@ -284,13 +286,20 @@ describe('getWorkspaceContext', () => {
     expect(result.project).toBeNull();
   });
 
-  it('returns workspace-no-active when projects.json exists but no active project', () => {
-    writeProjects(tmpDir, defaultProjectsJson('proj-a'));
-    // No workspace-state.json → loadActiveProject returns null
+  it('returns workspace-no-active when registry has no active project', () => {
+    writeProjects(tmpDir, { ...defaultProjectsJson('proj-a'), active_project: null });
     const result = getWorkspaceContext(tmpDir);
     expect(result.mode).toBe('workspace-no-active');
     expect(result.workspace).toBe(true);
     expect(result.project).toBeNull();
+  });
+
+  it('resolves active project from the registry even without workspace-state.json', () => {
+    writeProjects(tmpDir, defaultProjectsJson('proj-a'));
+    // No workspace-state.json — registry alone is the source of truth.
+    const result = getWorkspaceContext(tmpDir);
+    expect(result.mode).toBe('multi-project');
+    expect(result.project.project_id).toBe('proj-a');
   });
 
   it('returns multi-project mode with full context when all files present', () => {

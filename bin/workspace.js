@@ -14,6 +14,7 @@
  */
 
 const path = require('path');
+const { parseArgs } = require('util');
 const { WorkspaceManager } = require('../lib/workspace-manager');
 const { upgradeToWorkspace, detectMigrationState } = require('../lib/workspace-migration');
 const { recordPitCrewReview } = require('../lib/workspace-pitcrew-resume');
@@ -22,6 +23,58 @@ const { formatWorkspaceContextBlock } = require('../lib/workspace-context-format
 const { writeSiblingIdeStubs } = require('../lib/workspace-hub-link');
 
 const PILOT_PROJECT_ID = 'proj-workspace-pilot';
+
+/** All valid `workspace <command>` names (used by help, routing, and doc tests). */
+const WORKSPACE_COMMANDS = [
+  'help', 'status', 'init', 'upgrade', 'active', 'set-active', 'detect', 'context',
+  'validate-deps', 'report', 'projects-in-flight', 'pause', 'resume', 'can-advance',
+  'budget', 'adjust-budget', 'scan-adrs', 'adr-index', 'adr-impacts',
+  'audit-adr-awareness', 'knowledge-graph', 'query-graph', 'pitcrew-record',
+  'sync', 'config', 'create-project', 'link-sibling', 'archive', 'unarchive',
+  'remove-project',
+];
+
+/** Flag definitions per command (long form; both --flag value and --flag=value work). */
+const COMMAND_FLAGS = {
+  'create-project': {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    type: { type: 'string' },
+    approver: { type: 'string' },
+  },
+  'link-sibling': {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    path: { type: 'string' },
+    type: { type: 'string' },
+    approver: { type: 'string' },
+    init: { type: 'boolean' },
+    'set-active': { type: 'boolean' },
+  },
+  config: {
+    'enforce-sequential-phases': { type: 'string' },
+    'allow-parallel-projects': { type: 'string' },
+    'pit-crew-review-required': { type: 'string' },
+    'cross-project-dependency-validation': { type: 'string' },
+    'aggregate-cost-tracking': { type: 'string' },
+    'max-concurrent-projects': { type: 'string' },
+  },
+};
+
+function parseCommandFlags(argv, options) {
+  try {
+    const { values } = parseArgs({ args: argv, options, strict: true, allowPositionals: false });
+    return { values };
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+function coerceBooleanFlag(name, raw) {
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  throw new Error(`--${name} expects true or false, got: ${raw}`);
+}
 
 /**
  * Parse --format=json or --format json from argv.
@@ -60,7 +113,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
   const projectIdArg = argv.find((arg) => arg.startsWith('--project-id='));
   const projectIdValue = projectIdArg ? projectIdArg.split('=')[1] : null;
 
-  if (command === 'upgrade') {
+  if (command === 'upgrade' || command === 'init') {
     const result = upgradeToWorkspace(rootDir);
     if (!result.success) {
       console.error(`❌ ${result.error}`);
@@ -94,6 +147,7 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
     command &&
     command !== 'help' &&
     command !== 'context' &&
+    command !== 'detect' &&
     detectMigrationState(rootDir) === 'single-project'
   ) {
     console.error('❌ Workspace not initialized. Run: jumpstart-mode workspace upgrade');
@@ -117,6 +171,73 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
     }
     console.log(block);
     console.log('');
+    return;
+  }
+
+  if (command === 'detect') {
+    const {
+      detectProjectFromPath,
+      formatDetectionResult,
+    } = require('../lib/workspace-detect');
+    const fileArg =
+      argv.find((arg) => arg.startsWith('--file='))?.split('=')[1] ||
+      (subcommand && !subcommand.startsWith('--') ? subcommand : null);
+
+    if (!fileArg) {
+      console.error('Usage: jumpstart-mode workspace detect <path> [--auto] [--json] [--project-id=<id>]');
+      process.exit(1);
+      return;
+    }
+
+    let result = detectProjectFromPath({ cwd: rootDir, filePath: fileArg });
+    const asJson = argv.includes('--json');
+
+    if (projectIdValue && result.hubRoot) {
+      try {
+        const manager = new WorkspaceManager(result.hubRoot);
+        manager.setActive(projectIdValue);
+        result = {
+          ...result,
+          active_project_id: projectIdValue,
+          suggested_project_id: projectIdValue,
+          detected_project_id: projectIdValue,
+          action: 'force',
+          ambiguous: false,
+        };
+      } catch (error) {
+        console.error(`❌ ${error.message}`);
+        process.exit(1);
+        return;
+      }
+    } else if (argv.includes('--auto') && result.action === 'switch' && result.hubRoot) {
+      try {
+        const manager = new WorkspaceManager(result.hubRoot);
+        manager.setActive(result.suggested_project_id);
+        result = {
+          ...result,
+          active_project_id: result.suggested_project_id,
+          action: 'already_active',
+        };
+        if (!asJson) {
+          console.log(`✅ Active project set to: ${result.suggested_project_id}\n`);
+        }
+      } catch (error) {
+        console.error(`❌ ${error.message}`);
+        process.exit(1);
+        return;
+      }
+    }
+
+    if (asJson) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(formatDetectionResult(result));
+      console.log('');
+    }
+
+    if (result.ambiguous) {
+      process.exit(2);
+    }
     return;
   }
 
@@ -428,7 +549,14 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       }
       break;
     case 'create-project': {
-      const result = manager.createProject(argv.slice(1));
+      const parsed = parseCommandFlags(argv.slice(1), COMMAND_FLAGS['create-project']);
+      if (parsed.error) {
+        console.error(`❌ ${parsed.error}`);
+        console.error('Usage: workspace create-project --id <proj-id> --name <name> --type <greenfield|brownfield> [--approver <name>]');
+        process.exit(1);
+        return;
+      }
+      const result = manager.createProject(parsed.values);
       if (!result.success) {
         console.error(`❌ ${result.error}`);
         process.exit(1);
@@ -439,8 +567,56 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       console.log(`   Next: jumpstart-mode workspace set-active ${result.projectId}`);
       break;
     }
+    case 'config': {
+      const parsed = parseCommandFlags(argv.slice(1), COMMAND_FLAGS.config);
+      if (parsed.error) {
+        console.error(`❌ ${parsed.error}`);
+        console.error('Usage: workspace config --allow-parallel-projects <true|false> [--pit-crew-review-required <true|false>] ...');
+        process.exit(1);
+        return;
+      }
+      const updates = {};
+      try {
+        for (const [flag, raw] of Object.entries(parsed.values)) {
+          const key = flag.replace(/-/g, '_');
+          updates[key] = flag === 'max-concurrent-projects'
+            ? parseInt(raw, 10)
+            : coerceBooleanFlag(flag, raw);
+        }
+      } catch (error) {
+        console.error(`❌ ${error.message}`);
+        process.exit(1);
+        return;
+      }
+      const result = manager.configureSettings(updates);
+      if (!result.success) {
+        console.error(`❌ ${result.error}`);
+        process.exit(1);
+        return;
+      }
+      console.log('✅ Workspace settings updated:');
+      Object.entries(result.settings).forEach(([key, value]) => {
+        console.log(`   ${key}: ${value}`);
+      });
+      break;
+    }
     case 'link-sibling': {
-      const result = manager.linkSiblingProject(argv.slice(1));
+      const parsed = parseCommandFlags(argv.slice(1), COMMAND_FLAGS['link-sibling']);
+      if (parsed.error) {
+        console.error(`❌ ${parsed.error}`);
+        console.error('Usage: workspace link-sibling --id <proj-id> --name <name> --path <../repo> [--init] [--set-active]');
+        process.exit(1);
+        return;
+      }
+      const result = manager.linkSiblingProject({
+        id: parsed.values.id,
+        name: parsed.values.name,
+        path: parsed.values.path,
+        type: parsed.values.type,
+        approver: parsed.values.approver,
+        init: parsed.values.init,
+        setActive: parsed.values['set-active'],
+      });
       if (!result.success) {
         console.error(`❌ ${result.error}`);
         process.exit(1);
@@ -484,7 +660,9 @@ function runWorkspaceCli(argv = process.argv.slice(2)) {
       break;
     }
     default:
+      console.error(`❌ Unknown workspace command: ${command}`);
       printHelp();
+      process.exit(1);
   }
 }
 
@@ -513,9 +691,10 @@ Usage: jumpstart-mode workspace <command> [options]
 
 Commands:
   status              Show all projects (auto-initializes from single-project mode)
-  upgrade             Migrate single-project workspace to multi-project registry
+  init | upgrade      Migrate single-project workspace to multi-project registry
   active              Show the currently active project
   set-active <id>     Switch to a different project
+  detect <path>       Detect project owner from file path (--auto, --json, --project-id=<id>)
   context [--write]   Print IDE SessionStart context block (refresh sibling stubs with --write)
   validate-deps       Validate cross-project dependencies
   report [--format]   Generate workspace report (markdown, json, --cost-breakdown)
@@ -533,19 +712,22 @@ Commands:
   query-graph <query> Query graph (downstream-of, blocks, impact-of)
   pitcrew-record      Record Pit Crew outcome (--topic=, --outcome=, optional --next-steps=, --from=, --to=)
   sync                Sync projects.json with state files (--audit, --pull, --push)
+  config              Update workspace settings (--allow-parallel-projects true|false, ...)
   create-project      Create a new nested project under projects/
-  link-sibling        Register an existing sibling repo (--path=../repo, optional --init)
+  link-sibling        Register an existing sibling repo (--path ../repo, optional --init)
   archive <id>        Archive a completed project
   unarchive <id>      Restore an archived project
   remove-project <id> Remove from registry (--confirm, optional --delete-files)
 
 Examples:
-  jumpstart-mode workspace upgrade
+  jumpstart-mode workspace init
   jumpstart-mode workspace status
   jumpstart-mode workspace set-active proj-example
+  jumpstart-mode workspace detect projects/pilot/specs/prd.md --auto
   jumpstart-mode workspace report --format=json
-  jumpstart-mode workspace create-project --id=proj-example --name="Example" --type=greenfield
-  jumpstart-mode workspace link-sibling --id=proj-frontend --name="Frontend" --path=../frontend --init --set-active
+  jumpstart-mode workspace config --allow-parallel-projects false --pit-crew-review-required true
+  jumpstart-mode workspace create-project --id proj-example --name "Example" --type greenfield
+  jumpstart-mode workspace link-sibling --id proj-frontend --name "Frontend" --path ../frontend --init --set-active
   jumpstart-mode workspace context
   `);
 }
@@ -557,4 +739,6 @@ if (require.main === module) {
 module.exports = {
   runWorkspaceCli,
   parseFormatArg,
+  WORKSPACE_COMMANDS,
+  COMMAND_FLAGS,
 };

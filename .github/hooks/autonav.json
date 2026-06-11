@@ -75,6 +75,10 @@
       },
       {
         "type": "command",
+        "command": "node ${workspaceFolder}/.github/hooks/workspace-active-guard.js"
+      },
+      {
+        "type": "command",
         "command": "node ${workspaceFolder}/.github/hooks/phase-boundary-guard.js"
       },
       {

@@ -99,6 +99,52 @@ describe('validateSync', () => {
     expect(drifts.some((d) => d.type === 'missing_state')).toBe(true);
     expect(drifts.find((d) => d.type === 'missing_state').severity).toBe('warn');
   });
+
+  it('flags premature_phase when the Phase Gate Approval section is not approved', () => {
+    writeProjectState(tmpDir, 'proj-a', { current_phase: 2, status: 'phase-2' });
+    const specsDir = join(tmpDir, 'projects/proj-a/specs');
+    mkdirSync(specsDir, { recursive: true });
+    // Checked box and "Approved by:" outside the gate section must NOT count.
+    writeFileSync(
+      join(specsDir, 'prd.md'),
+      [
+        '# PRD',
+        '- [x] some unrelated done item',
+        'Approved by: mentioned in prose',
+        '',
+        '## Phase Gate Approval',
+        '- [ ] Requirements reviewed',
+        '**Approved by:** Pending',
+        '**Approval date:** Pending',
+      ].join('\n')
+    );
+
+    const manager = new WorkspaceManager(tmpDir);
+    const drifts = manager.validateSync('proj-a');
+    expect(drifts.some((d) => d.type === 'premature_phase')).toBe(true);
+  });
+
+  it('accepts a properly approved Phase Gate Approval section', () => {
+    writeProjectState(tmpDir, 'proj-a', { current_phase: 2, status: 'phase-2' });
+    const specsDir = join(tmpDir, 'projects/proj-a/specs');
+    mkdirSync(specsDir, { recursive: true });
+    writeFileSync(
+      join(specsDir, 'prd.md'),
+      [
+        '# PRD',
+        '',
+        '## Phase Gate Approval',
+        '- [x] Requirements reviewed',
+        '- [x] Scope agreed',
+        '**Approved by:** Jane Smith',
+        '**Approval date:** 2026-06-10',
+      ].join('\n')
+    );
+
+    const manager = new WorkspaceManager(tmpDir);
+    const drifts = manager.validateSync('proj-a');
+    expect(drifts.some((d) => d.type === 'premature_phase')).toBe(false);
+  });
 });
 
 describe('syncPush backup', () => {

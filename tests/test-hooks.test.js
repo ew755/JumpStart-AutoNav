@@ -40,6 +40,7 @@ const sessionAnalytics = require(path.join(HOOKS_DIR, 'session-analytics.js'));
 const common = require(path.join(HOOKS_DIR, 'lib', 'common.js'));
 const workspaceFingerprint = require(path.join(HOOKS_DIR, 'workspace-fingerprint.js'));
 const workspaceContextHook = require(path.join(HOOKS_DIR, 'workspace-context.js'));
+const workspaceActiveGuard = require(path.join(HOOKS_DIR, 'workspace-active-guard.js'));
 const workspaceSyncGuard = require(path.join(HOOKS_DIR, 'workspace-sync-guard.js'));
 const workspacePitcrewGuard = require(path.join(HOOKS_DIR, 'workspace-pitcrew-guard.js'));
 const phaseGateStatus = require(path.join(HOOKS_DIR, 'phase-gate-status.js'));
@@ -257,6 +258,93 @@ describe('workspace-context hook', () => {
     expect(res.stdout).toContain('sibling-linked');
     expect(res.stdout).toContain('proj-frontend');
     expect(res.stdout).toContain('SIBLING-WORKSPACE.md');
+  });
+});
+
+describe('workspace-active-guard hook', () => {
+  let root;
+
+  beforeEach(() => { root = makeSandbox(); });
+  afterEach(() => cleanup(root));
+
+  function scaffoldMultiProject(activeId = 'proj-a') {
+    fs.mkdirSync(path.join(root, '.jumpstart', 'state'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'projects', 'proj-b', 'specs'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'specs'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'projects.json'),
+      JSON.stringify({
+        workspace: { id: 'ws-test', enabled: true },
+        projects: [
+          { id: 'proj-a', name: 'Project A', path: '.', status: 'phase-1' },
+          { id: 'proj-b', name: 'Project B', path: 'projects/proj-b', status: 'phase-0' },
+        ],
+        active_project: activeId,
+        settings: {},
+      })
+    );
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'state', 'workspace-state.json'),
+      JSON.stringify({ active_project_id: activeId, workspace_resume_context: {} })
+    );
+  }
+
+  it('auto-switches active project when editing another project path', () => {
+    scaffoldMultiProject('proj-a');
+    const res = workspaceActiveGuard.handle(
+      {
+        sessionId: 's1',
+        tool_name: 'edit',
+        tool_input: { file_path: 'projects/proj-b/specs/prd.md' },
+      },
+      ctx(root)
+    );
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('Auto-switched');
+    const registry = JSON.parse(fs.readFileSync(path.join(root, '.jumpstart', 'projects.json'), 'utf8'));
+    expect(registry.active_project).toBe('proj-b');
+  });
+
+  it('blocks when path matches multiple projects at same depth', () => {
+    scaffoldMultiProject('proj-a');
+    fs.writeFileSync(
+      path.join(root, '.jumpstart', 'projects.json'),
+      JSON.stringify({
+        workspace: { id: 'ws-test', enabled: true },
+        projects: [
+          { id: 'proj-a', name: 'A', path: 'projects/shared' },
+          { id: 'proj-b', name: 'B', path: 'projects/shared' },
+        ],
+        active_project: 'proj-a',
+        settings: {},
+      })
+    );
+    fs.mkdirSync(path.join(root, 'projects', 'shared', 'specs'), { recursive: true });
+
+    const res = workspaceActiveGuard.handle(
+      {
+        sessionId: 's1',
+        tool_name: 'edit',
+        tool_input: { file_path: 'projects/shared/specs/x.md' },
+      },
+      ctx(root)
+    );
+    expect(res.exitCode).toBe(2);
+    expect(res.stderr).toContain('Ambiguous workspace project');
+  });
+
+  it('ignores non-project paths like README.md', () => {
+    scaffoldMultiProject('proj-a');
+    const res = workspaceActiveGuard.handle(
+      {
+        sessionId: 's1',
+        tool_name: 'edit',
+        tool_input: { file_path: 'README.md' },
+      },
+      ctx(root)
+    );
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout || '').not.toContain('Auto-switched');
   });
 });
 
@@ -1396,7 +1484,7 @@ describe('session-analytics hook', () => {
 // ─── .github/hooks/autonav.json smoke test ──────────────────────────────────
 
 describe('.github/hooks/autonav.json', () => {
-  it('is valid JSON and registers all 26 hooks', () => {
+  it('is valid JSON and registers all 27 hooks', () => {
     const cfg = JSON.parse(
       fs.readFileSync(path.join(HOOKS_DIR, 'autonav.json'), 'utf8')
     );
@@ -1404,7 +1492,7 @@ describe('.github/hooks/autonav.json', () => {
     expect(cfg.hooks.SessionStart).toHaveLength(7);
     expect(cfg.hooks.UserPromptSubmit).toHaveLength(3);
     expect(cfg.hooks.PreCompact).toHaveLength(1);
-    expect(cfg.hooks.PreToolUse).toHaveLength(10);
+    expect(cfg.hooks.PreToolUse).toHaveLength(11);
     expect(cfg.hooks.PostToolUse).toHaveLength(3);
     expect(cfg.hooks.Stop).toHaveLength(2);
 
@@ -1412,7 +1500,7 @@ describe('.github/hooks/autonav.json', () => {
     for (const event of Object.keys(cfg.hooks)) {
       for (const hook of cfg.hooks[event]) commands.add(hook.command);
     }
-    expect(commands.size).toBe(26);
+    expect(commands.size).toBe(27);
   });
 
   it('every registered script file exists', () => {
