@@ -38,6 +38,11 @@ tests/e2e/reports/*.json
 # VS Code Copilot agent hook transient state
 .jumpstart/state/hook-state.json
 
+# Workspace runtime state (generated, mutable; config lives in .jumpstart/projects.json)
+.jumpstart/state/workspace-state.json
+.jumpstart/state/timeline.json
+.jumpstart/state/todos.json
+
 # Auto-generated changelog drafts (review then fold into CHANGELOG.md)
 specs/changelog-drafts/
 
